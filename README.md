@@ -1,4 +1,4 @@
-# Reddit Auto Post (Raspberry) 🤖📅
+<img width="1983" height="589" alt="reddit_scheduler_banner" src="https://github.com/user-attachments/assets/6816d11b-7ee0-4d23-b5c3-35a1a2e15425" />
 
 >Automate Reddit posting with a Flask web app + a background worker that publishes using Playwright.
 

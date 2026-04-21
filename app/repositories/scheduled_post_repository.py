@@ -48,3 +48,8 @@ class ScheduledPostRepository:
         with db.SessionLocal() as session:
             posts = session.query(ScheduledPost).order_by(ScheduledPost.id.desc()).all()
             return posts
+        
+    def get_by_id(self, post_id: int) -> ScheduledPost | None:
+        with db.SessionLocal() as session:
+            post = session.get(ScheduledPost, post_id)
+            return post

@@ -53,31 +53,81 @@
             display: inline-block;
             margin-bottom: 20px;
         }
+
+        .errors {
+            background: #ffe9e9;
+            border: 1px solid #e0a3a3;
+            color: #8a1f1f;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+
+        .errors ul {
+            margin: 0;
+            padding-left: 20px;
+        }
     </style>
 </head>
 <body>
     <a href="/">← Volver al listado</a>
     <h1>Nueva publicación programada</h1>
 
-    <form method="post" action="/posts">
+    {% if errors %}
+        <div class="errors">
+            <strong>Hay errores en el formulario:</strong>
+            <ul>
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <form method="post" action="/posts" enctype="multipart/form-data">
         <div class="field">
             <label for="title">Título</label>
-            <input type="text" id="title" name="title" required maxlength="300">
+            <input
+                type="text"
+                id="title"
+                name="title"
+                required
+                maxlength="300"
+                value="{{ form_data.title if form_data else '' }}"
+            >
         </div>
 
         <div class="field">
             <label for="body">Texto</label>
-            <textarea id="body" name="body"></textarea>
+            <textarea id="body" name="body">{{ form_data.body if form_data else '' }}</textarea>
         </div>
 
         <div class="field">
             <label for="subreddit">Subreddit</label>
-            <input type="text" id="subreddit" name="subreddit" required maxlength="100" placeholder="por ejemplo: pics">
+            <input
+                type="text"
+                id="subreddit"
+                name="subreddit"
+                required
+                maxlength="100"
+                placeholder="por ejemplo: pics"
+                value="{{ form_data.subreddit if form_data else '' }}"
+            >
+        </div>
+
+        <div class="field">
+            <label for="image">Imagen</label>
+            <input type="file" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
         </div>
 
         <div class="field">
             <label for="scheduled_at">Fecha y hora</label>
-            <input type="datetime-local" id="scheduled_at" name="scheduled_at" required>
+            <input
+                type="datetime-local"
+                id="scheduled_at"
+                name="scheduled_at"
+                required
+                value="{{ form_data.scheduled_at if form_data else '' }}"
+            >
         </div>
 
         <button type="submit">Guardar publicación</button>

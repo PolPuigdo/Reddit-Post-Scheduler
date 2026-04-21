@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de publicación</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f7f7f7;
+            color: #222;
+        }
+
+        h1 {
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 24px;
+            max-width: 900px;
+        }
+
+        .row {
+            margin-bottom: 14px;
+        }
+
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            min-width: 180px;
+            vertical-align: top;
+        }
+
+        .value {
+            display: inline-block;
+            max-width: 650px;
+            word-break: break-word;
+        }
+
+        .body-box {
+            white-space: pre-wrap;
+            background: #fafafa;
+            border: 1px solid #eee;
+            padding: 12px;
+            margin-top: 6px;
+        }
+
+        a {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <a href="/">← Volver al listado</a>
+
+    <h1>Detalle de publicación</h1>
+
+    <div class="card">
+        <div class="row">
+            <span class="label">ID:</span>
+            <span class="value">{{ post.id }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Título:</span>
+            <span class="value">{{ post.title }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Subreddit:</span>
+            <span class="value">{{ post.subreddit }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Estado:</span>
+            <span class="value">{{ post.status }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Fecha programada (UTC):</span>
+            <span class="value">{{ post.scheduled_at_utc }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Timezone:</span>
+            <span class="value">{{ post.timezone }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Intentos:</span>
+            <span class="value">{{ post.attempts }} / {{ post.max_attempts }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">NSFW:</span>
+            <span class="value">{{ post.nsfw }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Spoiler:</span>
+            <span class="value">{{ post.spoiler }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Ruta de imagen:</span>
+            <span class="value">{{ post.image_path or "-" }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Reddit post id:</span>
+            <span class="value">{{ post.reddit_post_id or "-" }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Reddit post url:</span>
+            <span class="value">{{ post.reddit_post_url or "-" }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Error:</span>
+            <span class="value">{{ post.error_message or "-" }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Creado en UTC:</span>
+            <span class="value">{{ post.created_at_utc }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Actualizado en UTC:</span>
+            <span class="value">{{ post.updated_at_utc }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Publicado en UTC:</span>
+            <span class="value">{{ post.published_at_utc or "-" }}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Texto:</span>
+            <div class="body-box">{{ post.body or "-" }}</div>
+        </div>
+    </div>
+</body>
+</html>

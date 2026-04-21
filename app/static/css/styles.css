@@ -1,13 +1,13 @@
 :root {
-    --bg: #0b1118;
-    --bg-accent: #101a27;
-    --surface: #131d2b;
-    --surface-2: #1a2636;
-    --text-primary: #eaf2ff;
-    --text-muted: #9aaec8;
-    --border: #25354c;
-    --accent: #49c2ff;
-    --accent-strong: #2196d9;
+    --bg: #0f1115;
+    --bg-accent: #151922;
+    --surface: #1a1f2a;
+    --surface-2: #222938;
+    --text-primary: #e8edf6;
+    --text-muted: #a2acbd;
+    --border: #2c3447;
+    --accent: #ff7a2f;
+    --accent-strong: #ff5f1f;
     --success: #22c27f;
     --warning: #f3b84d;
     --danger: #ff5f79;
@@ -33,9 +33,9 @@ body {
     font-family: "Segoe UI Variable", "Segoe UI", "Trebuchet MS", "Verdana", sans-serif;
     color: var(--text-primary);
     background:
-        radial-gradient(1200px 600px at 110% -10%, rgba(73, 194, 255, 0.12), transparent 58%),
-        radial-gradient(900px 480px at -15% 120%, rgba(91, 137, 255, 0.13), transparent 55%),
-        linear-gradient(160deg, #0a1017 0%, var(--bg) 52%, var(--bg-accent) 100%);
+        radial-gradient(1200px 600px at 110% -10%, rgba(255, 255, 255, 0.04), transparent 58%),
+        radial-gradient(900px 480px at -15% 120%, rgba(255, 255, 255, 0.03), transparent 55%),
+        linear-gradient(160deg, #0c0f14 0%, var(--bg) 52%, var(--bg-accent) 100%);
 }
 
 a {
@@ -44,7 +44,7 @@ a {
 }
 
 a:hover {
-    color: #76d2ff;
+    color: #ffad84;
 }
 
 .page {
@@ -65,10 +65,67 @@ a:hover {
     margin-bottom: 1.4rem;
 }
 
+.home-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 2.4rem;
+    margin-bottom: 2.35rem;
+}
+
+.home-header .brand {
+    grid-column: 2;
+    justify-content: center;
+}
+
+.home-header h1 {
+    font-size: clamp(2.2rem, 4.6vw, 3rem);
+}
+
+.home-add-btn {
+    grid-column: 3;
+    justify-self: end;
+    margin-left: 2.2rem;
+}
+
+.brand,
+.title-with-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.brand-logo {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.title-logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
 h1 {
     margin: 0;
     font-size: clamp(1.75rem, 3vw, 2.5rem);
     letter-spacing: 0.01em;
+}
+
+.section-title {
+    margin: 0 0 1.35rem 0;
+    font-size: 1.05rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.posts-section {
+    margin-top: 1.4rem;
+    padding: 1.75rem 1.5rem;
 }
 
 .card {
@@ -103,23 +160,23 @@ h1 {
 }
 
 .btn-primary {
-    background: linear-gradient(170deg, #4dcbff 0%, #1f9ddf 100%);
-    color: #06111d;
-    box-shadow: 0 8px 18px rgba(33, 150, 217, 0.35);
+    background: linear-gradient(170deg, #ff934d 0%, #ff5f1f 100%);
+    color: #1f1006;
+    box-shadow: 0 8px 18px rgba(255, 95, 31, 0.35);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(170deg, #6ed6ff 0%, #2aa9ea 100%);
+    background: linear-gradient(170deg, #ffa466 0%, #ff7234 100%);
 }
 
 .btn-secondary {
-    background: #162335;
-    border-color: #2c435e;
+    background: #232a3a;
+    border-color: #3a455d;
     color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-    background: #1c2b41;
+    background: #2a3347;
 }
 
 .btn-danger {
@@ -140,7 +197,7 @@ button:disabled,
 }
 
 :focus-visible {
-    outline: 2px solid #7ad6ff;
+    outline: 2px solid #ffae86;
     outline-offset: 2px;
 }
 
@@ -167,8 +224,8 @@ button:disabled,
 }
 
 .data-table thead th {
-    background: #1a273a;
-    color: #c7d9f1;
+    background: #232b3b;
+    color: #d5deef;
     font-weight: 700;
 }
 
@@ -177,7 +234,7 @@ button:disabled,
 }
 
 .data-table tbody tr:hover {
-    background: rgba(73, 194, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .status-badge {
@@ -210,9 +267,9 @@ button:disabled,
 }
 
 .status-cancelled {
-    background: rgba(154, 174, 200, 0.12);
-    color: #cfdced;
-    border-color: rgba(154, 174, 200, 0.3);
+    background: rgba(162, 172, 189, 0.14);
+    color: #dce3f0;
+    border-color: rgba(162, 172, 189, 0.3);
 }
 
 .form-card {
@@ -226,7 +283,7 @@ button:disabled,
 .field label {
     display: block;
     margin-bottom: 0.42rem;
-    color: #d4e3f8;
+    color: #d9e2f2;
     font-weight: 700;
 }
 
@@ -235,9 +292,9 @@ input[type="datetime-local"],
 input[type="file"],
 textarea {
     width: 100%;
-    border: 1px solid #304760;
+    border: 1px solid #3a455d;
     border-radius: var(--radius-sm);
-    background: #0f1825;
+    background: #131926;
     color: var(--text-primary);
     padding: 0.68rem 0.72rem;
     font: inherit;
@@ -245,7 +302,7 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-    color: #7f94b0;
+    color: #8592aa;
 }
 
 textarea {
@@ -280,7 +337,7 @@ textarea {
 }
 
 .detail-label {
-    color: #c6d8ef;
+    color: #ced8ea;
     font-weight: 700;
 }
 
@@ -291,17 +348,17 @@ textarea {
 
 .body-box {
     white-space: pre-wrap;
-    border: 1px solid #2f435c;
+    border: 1px solid #3a455d;
     border-radius: var(--radius-sm);
-    background: #101a27;
+    background: #131926;
     padding: 0.78rem 0.9rem;
 }
 
 .image-preview {
     margin-top: 0.6rem;
-    border: 1px solid #31445d;
+    border: 1px solid #3a455d;
     border-radius: var(--radius-sm);
-    background: #101a27;
+    background: #131926;
     padding: 0.6rem;
     display: inline-block;
 }
@@ -336,6 +393,10 @@ textarea {
         padding: 1rem;
     }
 
+    .posts-section {
+        padding: 1.2rem 1rem;
+    }
+
     .detail-grid {
         grid-template-columns: 1fr;
         gap: 0.32rem;
@@ -343,6 +404,24 @@ textarea {
 
     .detail-label {
         margin-top: 0.5rem;
+    }
+
+    .brand-logo {
+        width: 48px;
+        height: 48px;
+    }
+
+    .title-logo {
+        width: 36px;
+        height: 36px;
+    }
+
+    .home-header {
+        column-gap: 1.2rem;
+    }
+
+    .home-header h1 {
+        font-size: clamp(2rem, 5.6vw, 2.6rem);
     }
 }
 
@@ -358,5 +437,20 @@ textarea {
 
     .page-header .btn {
         width: 100%;
+    }
+
+    .home-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.95rem;
+    }
+
+    .home-header .brand {
+        justify-content: center;
+    }
+
+    .home-add-btn {
+        margin-left: 0;
     }
 }

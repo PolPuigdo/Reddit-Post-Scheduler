@@ -1,19 +1,23 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle de publicaci&oacute;n</title>
+    <title>Post details</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/app_logo.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
     <main class="page">
         <nav class="top-nav">
-            <a class="btn btn-secondary" href="/">&larr; Volver al listado</a>
+            <a class="btn btn-secondary" href="/">&larr; Back to list</a>
         </nav>
 
         <header class="page-header">
-            <h1>Detalle de publicaci&oacute;n</h1>
+            <div class="title-with-logo">
+                <img class="title-logo" src="{{ url_for('static', filename='img/app_logo.png') }}" alt="Reddit Scheduler logo">
+                <h1>Post details</h1>
+            </div>
         </header>
 
         <section class="card section">
@@ -21,24 +25,24 @@
                 <div class="detail-label">ID:</div>
                 <div class="detail-value">{{ post.id }}</div>
 
-                <div class="detail-label">T&iacute;tulo:</div>
+                <div class="detail-label">Title:</div>
                 <div class="detail-value">{{ post.title }}</div>
 
                 <div class="detail-label">Subreddit:</div>
                 <div class="detail-value">{{ post.subreddit }}</div>
 
-                <div class="detail-label">Estado:</div>
+                <div class="detail-label">Status:</div>
                 <div class="detail-value">
                     <span class="status-badge status-{{ post.status }}">{{ post.status }}</span>
                 </div>
 
-                <div class="detail-label">Fecha programada (UTC):</div>
+                <div class="detail-label">Scheduled date (UTC):</div>
                 <div class="detail-value">{{ post.scheduled_at_utc }}</div>
 
                 <div class="detail-label">Timezone:</div>
                 <div class="detail-value">{{ post.timezone }}</div>
 
-                <div class="detail-label">Intentos:</div>
+                <div class="detail-label">Attempts:</div>
                 <div class="detail-value">{{ post.attempts }} / {{ post.max_attempts }}</div>
 
                 <div class="detail-label">NSFW:</div>
@@ -47,12 +51,12 @@
                 <div class="detail-label">Spoiler:</div>
                 <div class="detail-value">{{ post.spoiler }}</div>
 
-                <div class="detail-label">Ruta de imagen:</div>
+                <div class="detail-label">Image path:</div>
                 <div class="detail-value">
                     {{ post.image_path or "-" }}
                     {% if image_filename %}
                         <div class="image-preview">
-                            <img src="/uploads/{{ image_filename }}" alt="Imagen subida">
+                            <img src="/uploads/{{ image_filename }}" alt="Uploaded image">
                         </div>
                     {% endif %}
                 </div>
@@ -66,16 +70,16 @@
                 <div class="detail-label">Error:</div>
                 <div class="detail-value">{{ post.error_message or "-" }}</div>
 
-                <div class="detail-label">Creado en UTC:</div>
+                <div class="detail-label">Created at UTC:</div>
                 <div class="detail-value">{{ post.created_at_utc }}</div>
 
-                <div class="detail-label">Actualizado en UTC:</div>
+                <div class="detail-label">Updated at UTC:</div>
                 <div class="detail-value">{{ post.updated_at_utc }}</div>
 
-                <div class="detail-label">Publicado en UTC:</div>
+                <div class="detail-label">Published at UTC:</div>
                 <div class="detail-value">{{ post.published_at_utc or "-" }}</div>
 
-                <div class="detail-label">Texto:</div>
+                <div class="detail-label">Body:</div>
                 <div class="detail-value">
                     <div class="body-box">{{ post.body or "-" }}</div>
                 </div>
@@ -84,11 +88,11 @@
             {% if post.status == "pending" %}
                 <div class="detail-actions">
                     <form method="post" action="/posts/{{ post.id }}/cancel">
-                        <button class="btn btn-danger" type="submit">Cancelar publicaci&oacute;n</button>
+                        <button class="btn btn-danger" type="submit">Cancel post</button>
                     </form>
 
                     <form method="post" action="/posts/{{ post.id }}/publish-now">
-                        <button class="btn btn-primary" type="submit">Publicar ahora</button>
+                        <button class="btn btn-primary" type="submit">Publish now</button>
                     </form>
                 </div>
             {% endif %}

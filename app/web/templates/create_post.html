@@ -1,25 +1,29 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nueva publicaci&oacute;n</title>
+    <title>New post</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/app_logo.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
     <main class="page">
         <nav class="top-nav">
-            <a class="btn btn-secondary" href="/">&larr; Volver al listado</a>
+            <a class="btn btn-secondary" href="/">&larr; Back to list</a>
         </nav>
 
         <header class="page-header">
-            <h1>Nueva publicaci&oacute;n programada</h1>
+            <div class="title-with-logo">
+                <img class="title-logo" src="{{ url_for('static', filename='img/app_logo.png') }}" alt="Reddit Scheduler logo">
+                <h1>New scheduled post</h1>
+            </div>
         </header>
 
         <section class="card section form-card">
             {% if errors %}
                 <div class="errors" role="alert" aria-live="polite">
-                    <strong>Hay errores en el formulario:</strong>
+                    <strong>There are errors in the form:</strong>
                     <ul>
                         {% for error in errors %}
                             <li>{{ error }}</li>
@@ -30,7 +34,7 @@
 
             <form method="post" action="/posts" enctype="multipart/form-data">
                 <div class="field">
-                    <label for="title">T&iacute;tulo</label>
+                    <label for="title">Title</label>
                     <input
                         type="text"
                         id="title"
@@ -42,7 +46,7 @@
                 </div>
 
                 <div class="field">
-                    <label for="body">Texto</label>
+                    <label for="body">Body</label>
                     <textarea id="body" name="body">{{ form_data.body if form_data else '' }}</textarea>
                 </div>
 
@@ -54,18 +58,18 @@
                         name="subreddit"
                         required
                         maxlength="100"
-                        placeholder="por ejemplo: pics"
+                        placeholder="for example: pics"
                         value="{{ form_data.subreddit if form_data else '' }}"
                     >
                 </div>
 
                 <div class="field">
-                    <label for="image">Imagen</label>
+                    <label for="image">Image</label>
                     <input type="file" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
                 </div>
 
                 <div class="field">
-                    <label for="scheduled_at">Fecha y hora</label>
+                    <label for="scheduled_at">Date and time</label>
                     <input
                         type="datetime-local"
                         id="scheduled_at"
@@ -75,7 +79,7 @@
                     >
                 </div>
 
-                <button class="btn btn-primary" type="submit">Guardar publicaci&oacute;n</button>
+                <button class="btn btn-primary" type="submit">Save post</button>
             </form>
         </section>
     </main>

@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle de publicación</title>
     <style>
+        .image-preview {
+            margin-top: 10px;
+        }
+
+        .image-preview img {
+            max-width: 400px;
+            max-height: 400px;
+            border: 1px solid #ddd;
+            background: white;
+            padding: 6px;
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 40px;
@@ -108,6 +119,12 @@
         <div class="row">
             <span class="label">Ruta de imagen:</span>
             <span class="value">{{ post.image_path or "-" }}</span>
+
+            {% if image_filename %}
+                <div class="image-preview">
+                    <img src="/uploads/{{ image_filename }}" alt="Imagen subida">
+                </div>
+            {% endif %}
         </div>
 
         <div class="row">
@@ -144,6 +161,14 @@
             <span class="label">Texto:</span>
             <div class="body-box">{{ post.body or "-" }}</div>
         </div>
+
+        {% if post.status == "pending" %}
+            <div style="margin-top: 24px;">
+                <form method="post" action="/posts/{{ post.id }}/cancel">
+                    <button type="submit">Cancelar publicación</button>
+                </form>
+            </div>
+        {% endif %}
     </div>
 </body>
 </html>

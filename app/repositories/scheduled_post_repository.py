@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-
 import app.db as db
 from app.models import ScheduledPost
 
@@ -53,3 +52,19 @@ class ScheduledPostRepository:
         with db.SessionLocal() as session:
             post = session.get(ScheduledPost, post_id)
             return post
+        
+    def cancel(self, post_id: int) -> bool:
+        with db.SessionLocal() as session:
+            post = session.get(ScheduledPost, post_id)
+
+            if post is None:
+                return False
+
+            if post.status != "pending":
+                return False
+
+            post.status = "cancelled"
+            post.updated_at_utc = datetime.now(timezone.utc)
+
+            session.commit()
+            return True

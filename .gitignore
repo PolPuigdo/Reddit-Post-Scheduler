@@ -1,0 +1,116 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+*.egg
+*.whl
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.pytest_cache/
+
+# PyCharm / JetBrains (por si acaso)
+.idea/
+
+# =========================
+# Entornos virtuales
+# =========================
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# =========================
+# Variables de entorno
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# SQLite / Base de datos
+# =========================
+*.db
+*.sqlite3
+
+# =========================
+# Archivos generados por la app
+# =========================
+data/
+logs/
+
+# (Opcional) si quieres mantener la estructura pero no el contenido:
+# !data/
+# !data/uploads/
+# data/uploads/*
+# logs/*
+
+# =========================
+# Uploads (imágenes)
+# =========================
+uploads/
+data/uploads/
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Flask
+# =========================
+instance/
+.webassets-cache
+
+# =========================
+# VS Code
+# =========================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# =========================
+# OS / Misc
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Systemd (mantenerlo)
+# =========================
+!reddit-autopost.service

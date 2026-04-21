@@ -1,5 +1,5 @@
 from pathlib import Path
-from flask import abort, redirect, render_template, request, send_from_directory, url_for
+from flask import abort, current_app, redirect, render_template, request, send_from_directory, url_for
 from app.config import Config
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.services.validation_service import PostValidationService
@@ -111,3 +111,29 @@ def register_routes(app, file_storage_service, reddit_publisher):
             repo.mark_failed(post.id, str(ex))
 
         return redirect(url_for("post_detail", post_id=post_id))
+
+    @app.route("/posts/<int:post_id>/delete", methods=["POST"])
+    def delete_post(post_id: int):
+        repo = ScheduledPostRepository()
+        post = repo.get_by_id(post_id)
+
+        if post is None:
+            abort(404)
+
+        if post.status != "cancelled":
+            abort(400)
+
+        try:
+            file_storage_service.delete_image(post.image_path)
+        except (OSError, ValueError) as ex:
+            current_app.logger.warning(
+                "Could not delete image for post ID=%s: %s",
+                post_id,
+                ex,
+            )
+
+        deleted = repo.delete_cancelled(post_id)
+        if not deleted:
+            abort(400)
+
+        return redirect(url_for("home"))

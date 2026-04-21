@@ -68,6 +68,20 @@ class ScheduledPostRepository:
 
             session.commit()
             return True
+
+    def delete_cancelled(self, post_id: int) -> bool:
+        with db.SessionLocal() as session:
+            post = session.get(ScheduledPost, post_id)
+
+            if post is None:
+                return False
+
+            if post.status != "cancelled":
+                return False
+
+            session.delete(post)
+            session.commit()
+            return True
         
     def mark_posted(self, post_id: int, reddit_post_url: str) -> bool:
         with db.SessionLocal() as session:

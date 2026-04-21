@@ -70,7 +70,7 @@ a:hover {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     column-gap: 2.4rem;
-    margin-bottom: 2.35rem;
+    margin-bottom: 4rem;
 }
 
 .home-header .brand {
@@ -85,7 +85,7 @@ a:hover {
 .home-add-btn {
     grid-column: 3;
     justify-self: end;
-    margin-left: 2.2rem;
+    margin-left: 86%;
 }
 
 .brand,

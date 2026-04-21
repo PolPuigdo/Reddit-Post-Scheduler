@@ -126,6 +126,18 @@
                     </form>
                 </div>
             {% endif %}
+
+            {% if post.status == "cancelled" %}
+                <div class="detail-actions">
+                    <form
+                        method="post"
+                        action="/posts/{{ post.id }}/delete"
+                        onsubmit="return confirm('This action will permanently delete this schedule. Continue?');"
+                    >
+                        <button class="btn btn-danger" type="submit">Delete schedule</button>
+                    </form>
+                </div>
+            {% endif %}
         </section>
     </main>
 </body>

@@ -21,3 +21,4 @@ class Config:
     REDDIT_USERNAME = os.getenv("REDDIT_USERNAME", "")
     REDDIT_PASSWORD = os.getenv("REDDIT_PASSWORD", "")
     REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "reddit-auto-post/1.0")
+    LOG_FILE_PATH = os.getenv("LOG_FILE_PATH", "logs/worker.log")

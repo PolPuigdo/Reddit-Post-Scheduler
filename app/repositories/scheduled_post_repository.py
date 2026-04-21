@@ -92,9 +92,29 @@ class ScheduledPostRepository:
             if post is None:
                 return False
 
-            post.status = "failed"
-            post.error_message = error_message
             post.attempts += 1
+            post.error_message = error_message
+            post.updated_at_utc = datetime.now(timezone.utc)
+
+            if post.attempts >= post.max_attempts:
+                post.status = "failed"
+            else:
+                post.status = "pending"
+
+            session.commit()
+            return True
+        
+    def mark_publishing(self, post_id: int) -> bool:
+        with db.SessionLocal() as session:
+            post = session.get(ScheduledPost, post_id)
+
+            if post is None:
+                return False
+
+            if post.status != "pending":
+                return False
+
+            post.status = "publishing"
             post.updated_at_utc = datetime.now(timezone.utc)
 
             session.commit()

@@ -16,3 +16,8 @@ class Config:
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/app.db")
     UPLOAD_FOLDER = str(BASE_DIR / "data" / "uploads")
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 10 * 1024 * 1024))
+    REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
+    REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET", "")
+    REDDIT_USERNAME = os.getenv("REDDIT_USERNAME", "")
+    REDDIT_PASSWORD = os.getenv("REDDIT_PASSWORD", "")
+    REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "reddit-auto-post/1.0")

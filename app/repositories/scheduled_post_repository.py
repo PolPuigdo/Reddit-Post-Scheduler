@@ -68,3 +68,45 @@ class ScheduledPostRepository:
 
             session.commit()
             return True
+        
+    def mark_posted(self, post_id: int, reddit_post_url: str) -> bool:
+        with db.SessionLocal() as session:
+            post = session.get(ScheduledPost, post_id)
+
+            if post is None:
+                return False
+
+            post.status = "posted"
+            post.reddit_post_url = reddit_post_url
+            post.published_at_utc = datetime.now(timezone.utc)
+            post.updated_at_utc = datetime.now(timezone.utc)
+            post.error_message = None
+
+            session.commit()
+            return True
+
+    def mark_failed(self, post_id: int, error_message: str) -> bool:
+        with db.SessionLocal() as session:
+            post = session.get(ScheduledPost, post_id)
+
+            if post is None:
+                return False
+
+            post.status = "failed"
+            post.error_message = error_message
+            post.attempts += 1
+            post.updated_at_utc = datetime.now(timezone.utc)
+
+            session.commit()
+            return True
+        
+    def get_due_pending_posts(self, now_utc: datetime) -> list[ScheduledPost]:
+        with db.SessionLocal() as session:
+            posts = (
+                session.query(ScheduledPost)
+                .filter(ScheduledPost.status == "pending")
+                .filter(ScheduledPost.scheduled_at_utc <= now_utc)
+                .order_by(ScheduledPost.scheduled_at_utc.asc())
+                .all()
+            )
+            return posts

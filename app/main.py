@@ -3,6 +3,7 @@ from app.config import Config
 from app.db import Base, init_db
 import app.models
 from app.services.file_storage_service import FileStorageService
+from app.services.reddit_playwright_publisher import RedditPlaywrightPublisher
 from app.web.routes import register_routes
 
 
@@ -14,8 +15,11 @@ def create_app():
     Base.metadata.create_all(bind=engine)
 
     file_storage_service = FileStorageService(Config.UPLOAD_FOLDER)
+    reddit_publisher = RedditPlaywrightPublisher(
+        auth_file="playwright/.auth/reddit.json"
+    )
 
-    register_routes(app, file_storage_service)
+    register_routes(app, file_storage_service, reddit_publisher)
 
     return app
 

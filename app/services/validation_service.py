@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-
 class PostValidationService:
     def validate_create_post_form(self, form_data: dict) -> tuple[list[str], datetime | None]:
         title = form_data.get("title", "").strip()
@@ -11,21 +10,21 @@ class PostValidationService:
         scheduled_at_utc: datetime | None = None
 
         if not title:
-            errors.append("El título es obligatorio.")
+            errors.append("The title is required.")
 
         if not subreddit:
-            errors.append("El subreddit es obligatorio.")
+            errors.append("The subreddit is required.")
         elif " " in subreddit:
-            errors.append("El subreddit no debe contener espacios.")
+            errors.append("The subreddit must not contain spaces.")
 
         if not scheduled_at_raw:
-            errors.append("La fecha y hora son obligatorias.")
+            errors.append("The date and time are required.")
 
         if scheduled_at_raw:
             try:
                 local_dt = datetime.strptime(scheduled_at_raw, "%Y-%m-%dT%H:%M")
                 scheduled_at_utc = local_dt.astimezone(timezone.utc)
             except ValueError:
-                errors.append("La fecha y hora tienen un formato inválido.")
+                errors.append("The date and time are in an invalid format.")
 
         return errors, scheduled_at_utc

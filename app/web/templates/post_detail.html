@@ -169,6 +169,18 @@
                 </form>
             </div>
         {% endif %}
+
+        {% if post.status == "pending" %}
+            <div style="margin-top: 24px; display: flex; gap: 12px;">
+                <form method="post" action="/posts/{{ post.id }}/cancel">
+                    <button type="submit">Cancelar publicación</button>
+                </form>
+
+                <form method="post" action="/posts/{{ post.id }}/publish-now">
+                    <button type="submit">Publicar ahora</button>
+                </form>
+            </div>
+        {% endif %}
     </div>
 </body>
 </html>

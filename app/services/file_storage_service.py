@@ -1,9 +1,7 @@
 from pathlib import Path
 from uuid import uuid4
-
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-
 
 class FileStorageService:
     ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -18,7 +16,7 @@ class FileStorageService:
 
         extension = Path(safe_name).suffix.lower()
         if extension not in self.ALLOWED_EXTENSIONS:
-            raise ValueError("Formato de imagen no permitido. Usa jpg, jpeg, png o webp.")
+            raise ValueError("Unsupported image format. Please use jpg, jpeg, png, or webp.")
 
         unique_name = f"{uuid4().hex}{extension}"
         final_path = self.upload_folder / unique_name

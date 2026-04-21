@@ -1,3 +1,5 @@
 Flask
 python-dotenv
 SQLAlchemy
+praw
+playwright

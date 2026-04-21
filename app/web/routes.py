@@ -5,7 +5,7 @@ from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.services.validation_service import PostValidationService
 
 
-def register_routes(app, file_storage_service):
+def register_routes(app, file_storage_service, reddit_publisher):
     validation_service = PostValidationService()
     @app.route("/")
     def home():
@@ -85,5 +85,29 @@ def register_routes(app, file_storage_service):
 
         if not cancelled:
             abort(404)
+
+        return redirect(url_for("post_detail", post_id=post_id))
+    
+    @app.route("/posts/<int:post_id>/publish-now", methods=["POST"])
+    def publish_now(post_id: int):
+        repo = ScheduledPostRepository()
+        post = repo.get_by_id(post_id)
+
+        if post is None:
+            abort(404)
+
+        if post.status != "pending":
+            abort(400)
+
+        try:
+            final_url = reddit_publisher.publish(
+                subreddit=post.subreddit,
+                title=post.title,
+                body=post.body,
+                image_path=post.image_path,
+            )
+            repo.mark_posted(post.id, final_url)
+        except Exception as ex:
+            repo.mark_failed(post.id, str(ex))
 
         return redirect(url_for("post_detail", post_id=post_id))

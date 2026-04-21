@@ -35,6 +35,7 @@ def run_once():
     publisher = RedditPlaywrightPublisher(
         auth_file=Config.PLAYWRIGHT_AUTH_FILE,
         headless=Config.PLAYWRIGHT_HEADLESS,
+        debug_artifacts_dir=Config.DEBUG_ARTIFACTS_DIR,
     )
 
     for post in due_posts:

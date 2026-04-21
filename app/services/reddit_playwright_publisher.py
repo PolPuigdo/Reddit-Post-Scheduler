@@ -1,11 +1,38 @@
+from datetime import datetime
 from pathlib import Path
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
 class RedditPlaywrightPublisher:
-    def __init__(self, auth_file: str, headless: bool = False):
+    def __init__(
+        self,
+        auth_file: str,
+        headless: bool = False,
+        debug_artifacts_dir: str = "logs/debug",
+    ):
         self.auth_file = Path(auth_file)
         self.headless = headless
+        self.debug_artifacts_dir = Path(debug_artifacts_dir)
+
+    def _save_debug_artifacts(self, page, prefix: str) -> None:
+        """Save screenshot and HTML page source for debugging purposes."""
+        self.debug_artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        screenshot_path = self.debug_artifacts_dir / f"{prefix}_{timestamp}.png"
+        html_path = self.debug_artifacts_dir / f"{prefix}_{timestamp}.html"
+
+        try:
+            page.screenshot(path=str(screenshot_path), full_page=True)
+            print(f"Debug screenshot saved to: {screenshot_path}")
+        except Exception as ex:
+            print(f"Could not save screenshot: {ex}")
+
+        try:
+            html_path.write_text(page.content(), encoding="utf-8")
+            print(f"Debug HTML saved to: {html_path}")
+        except Exception as ex:
+            print(f"Could not save HTML dump: {ex}")
 
     def publish(
         self,
@@ -33,6 +60,9 @@ class RedditPlaywrightPublisher:
                 raise RuntimeError(f"Image file not found: {resolved_image_path}")
 
         submit_url = f"https://www.reddit.com/r/{subreddit}/submit"
+
+        browser = None
+        page = None
 
         try:
             with sync_playwright() as p:
@@ -95,6 +125,7 @@ class RedditPlaywrightPublisher:
                 post_button.wait_for(state="visible", timeout=10000)
 
                 if not post_button.is_enabled():
+                    self._save_debug_artifacts(page, "post_button_disabled")
                     raise RuntimeError("Post button is not enabled.")
 
                 post_button.click()
@@ -110,4 +141,18 @@ class RedditPlaywrightPublisher:
                 return final_url
 
         except PlaywrightTimeoutError as ex:
+            if page is not None:
+                self._save_debug_artifacts(page, "timeout_error")
             raise RuntimeError("Error interacting with Reddit UI.") from ex
+
+        except Exception:
+            if page is not None:
+                self._save_debug_artifacts(page, "unexpected_error")
+            raise
+
+        finally:
+            if browser is not None:
+                try:
+                    browser.close()
+                except Exception:
+                    pass

@@ -23,4 +23,4 @@ class Config:
         str(BASE_DIR / "playwright" / ".auth" / "reddit.json")
     )
     WORKER_POLL_SECONDS = int(os.getenv("WORKER_POLL_SECONDS", 30))
-    
+    DEBUG_ARTIFACTS_DIR = os.getenv("DEBUG_ARTIFACTS_DIR", "logs/debug")

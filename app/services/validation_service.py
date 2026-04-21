@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 class PostValidationService:
-    def validate_create_post_form(self, form_data: dict) -> tuple[list[str], datetime | None]:
+    def validate_post_form(self, form_data: dict) -> tuple[list[str], datetime | None]:
         title = form_data.get("title", "").strip()
         subreddit = form_data.get("subreddit", "").strip()
         scheduled_at_raw = form_data.get("scheduled_at", "").strip()
@@ -28,3 +28,6 @@ class PostValidationService:
                 errors.append("The date and time are in an invalid format.")
 
         return errors, scheduled_at_utc
+
+    def validate_create_post_form(self, form_data: dict) -> tuple[list[str], datetime | None]:
+        return self.validate_post_form(form_data)

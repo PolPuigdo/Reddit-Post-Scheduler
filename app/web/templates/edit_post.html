@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit post</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/app_logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <main class="page">
+        <nav class="top-nav">
+            <a class="btn btn-secondary" href="/posts/{{ post.id }}">&larr; Back to details</a>
+        </nav>
+
+        <header class="page-header">
+            <div class="title-with-logo">
+                <img class="title-logo" src="{{ url_for('static', filename='img/app_logo.png') }}" alt="Reddit Scheduler logo">
+                <h1>Edit scheduled post</h1>
+            </div>
+        </header>
+
+        <section class="card section form-card">
+            {% if errors %}
+                <div class="errors" role="alert" aria-live="polite">
+                    <strong>There are errors in the form:</strong>
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form method="post" action="/posts/{{ post.id }}/edit" enctype="multipart/form-data">
+                <div class="field">
+                    <label for="title">Title</label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        required
+                        maxlength="300"
+                        value="{{ form_data.title if form_data else '' }}"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="body">Body</label>
+                    <textarea id="body" name="body">{{ form_data.body if form_data else '' }}</textarea>
+                </div>
+
+                <div class="field">
+                    <label for="subreddit">Subreddit</label>
+                    <input
+                        type="text"
+                        id="subreddit"
+                        name="subreddit"
+                        required
+                        maxlength="100"
+                        placeholder="for example: pics"
+                        value="{{ form_data.subreddit if form_data else '' }}"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="scheduled_at">Date and time</label>
+                    <input
+                        type="datetime-local"
+                        id="scheduled_at"
+                        name="scheduled_at"
+                        required
+                        value="{{ form_data.scheduled_at if form_data else '' }}"
+                    >
+                </div>
+
+                <div class="field">
+                    <label>Current image</label>
+                    {% if image_filename %}
+                        <div class="image-preview">
+                            <img src="/uploads/{{ image_filename }}" alt="Current uploaded image">
+                        </div>
+                        <p class="detail-path"><strong>Image path:</strong> {{ post.image_path }}</p>
+                    {% else %}
+                        <div class="body-box detail-empty-media">No image attached.</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="image">Replace image</label>
+                    <input type="file" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
+                    <small class="detail-path">If you upload a new image, it replaces the current one.</small>
+                </div>
+
+                <div class="field">
+                    <label>
+                        <input
+                            type="checkbox"
+                            name="remove_image"
+                            value="1"
+                            {% if form_data and form_data.remove_image %}checked{% endif %}
+                        >
+                        Remove current image
+                    </label>
+                </div>
+
+                <button class="btn btn-primary" type="submit">Save changes</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

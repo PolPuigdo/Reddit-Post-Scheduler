@@ -133,6 +133,39 @@ class ScheduledPostRepository:
 
             session.commit()
             return True
+
+    def update_pending(
+        self,
+        post_id: int,
+        title: str,
+        body: str | None,
+        subreddit: str,
+        scheduled_at_utc: datetime,
+        image_path: str | None,
+        reset_attempts: bool = True,
+    ) -> bool:
+        with db.SessionLocal() as session:
+            post = session.get(ScheduledPost, post_id)
+
+            if post is None:
+                return False
+
+            if post.status != "pending":
+                return False
+
+            post.title = title
+            post.body = body
+            post.subreddit = subreddit
+            post.scheduled_at_utc = scheduled_at_utc
+            post.image_path = image_path
+            post.updated_at_utc = datetime.now(timezone.utc)
+
+            if reset_attempts:
+                post.attempts = 0
+            post.error_message = None
+
+            session.commit()
+            return True
         
     def get_due_pending_posts(self, now_utc: datetime) -> list[ScheduledPost]:
         with db.SessionLocal() as session:

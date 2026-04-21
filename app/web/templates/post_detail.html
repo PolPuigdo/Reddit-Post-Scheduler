@@ -117,6 +117,8 @@
 
             {% if post.status == "pending" %}
                 <div class="detail-actions">
+                    <a class="btn btn-secondary" href="/posts/{{ post.id }}/edit">Edit</a>
+
                     <form method="post" action="/posts/{{ post.id }}/cancel">
                         <button class="btn btn-danger" type="submit">Cancel post</button>
                     </form>

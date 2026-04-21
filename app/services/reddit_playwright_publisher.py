@@ -61,98 +61,89 @@ class RedditPlaywrightPublisher:
 
         submit_url = f"https://www.reddit.com/r/{subreddit}/submit"
 
-        browser = None
-        page = None
-
         try:
             with sync_playwright() as p:
-                # Launch browser (headless configurable)
                 browser = p.chromium.launch(headless=self.headless)
                 context = browser.new_context(storage_state=str(self.auth_file))
                 page = context.new_page()
 
-                print(f"Opening submit page: {submit_url}")
-                page.goto(submit_url, wait_until="domcontentloaded")
-                page.wait_for_timeout(3000)
+                try:
+                    print(f"Opening submit page: {submit_url}")
+                    page.goto(submit_url, wait_until="domcontentloaded")
+                    page.wait_for_timeout(3000)
 
-                # If an image is provided, try to switch to the Images tab first.
-                # Some subreddits require using the Images composer explicitly,
-                # while others do not expose this tab at all.
-                if resolved_image_path:
-                    try:
-                        images_tab = page.get_by_role("tab", name="Images").first
-                        if images_tab.is_visible():
-                            print("Switching to Images tab...")
-                            images_tab.click()
-                            page.wait_for_timeout(1500)
-                    except Exception:
-                        print("Images tab not available. Continuing with default composer...")
+                    # If an image is provided, try to switch to the Images tab first.
+                    # Some subreddits require using the Images composer explicitly,
+                    # while others do not expose this tab at all.
+                    if resolved_image_path:
+                        try:
+                            images_tab = page.get_by_role("tab", name="Images").first
+                            if images_tab.is_visible():
+                                print("Switching to Images tab...")
+                                images_tab.click()
+                                page.wait_for_timeout(1500)
+                        except Exception:
+                            print("Images tab not available. Continuing with default composer...")
 
-                # Fill title
-                print("Filling title...")
-                title_input = page.locator('textarea[name="title"]')
-                title_input.wait_for(state="visible", timeout=10000)
-                title_input.fill(title)
+                    # Fill title
+                    print("Filling title...")
+                    title_input = page.locator('textarea[name="title"]')
+                    title_input.wait_for(state="visible", timeout=10000)
+                    title_input.fill(title)
 
-                # Fill body if provided
-                if body:
-                    print("Filling body...")
-                    body_input = page.locator(
-                        'div[name="body"][contenteditable="true"][role="textbox"]:visible'
-                    ).first
-                    body_input.wait_for(state="visible", timeout=10000)
-                    body_input.click()
-                    body_input.press_sequentially(body)
+                    # Fill body if provided
+                    if body:
+                        print("Filling body...")
+                        body_input = page.locator(
+                            'div[name="body"][contenteditable="true"][role="textbox"]:visible'
+                        ).first
+                        body_input.wait_for(state="visible", timeout=10000)
+                        body_input.click()
+                        body_input.press_sequentially(body)
 
-                # Upload image if provided
-                if resolved_image_path:
-                    print("Uploading image...")
-                    upload_button = page.locator('#device-upload-button:visible').first
-                    upload_button.wait_for(state="visible", timeout=10000)
+                    # Upload image if provided
+                    if resolved_image_path:
+                        print("Uploading image...")
+                        upload_button = page.locator('#device-upload-button:visible').first
+                        upload_button.wait_for(state="visible", timeout=10000)
 
-                    with page.expect_file_chooser() as fc_info:
-                        upload_button.click()
+                        with page.expect_file_chooser() as fc_info:
+                            upload_button.click()
 
-                    file_chooser = fc_info.value
-                    file_chooser.set_files(str(resolved_image_path))
+                        file_chooser = fc_info.value
+                        file_chooser.set_files(str(resolved_image_path))
 
-                    print("Waiting for image processing...")
-                    page.wait_for_timeout(8000)
+                        print("Waiting for image processing...")
+                        page.wait_for_timeout(8000)
 
-                # Submit post
-                print("Submitting post...")
-                post_button = page.get_by_role("button", name="Post").first
-                post_button.wait_for(state="visible", timeout=10000)
+                    # Submit post
+                    print("Submitting post...")
+                    post_button = page.get_by_role("button", name="Post").first
+                    post_button.wait_for(state="visible", timeout=10000)
 
-                if not post_button.is_enabled():
-                    self._save_debug_artifacts(page, "post_button_disabled")
-                    raise RuntimeError("Post button is not enabled.")
+                    if not post_button.is_enabled():
+                        self._save_debug_artifacts(page, "post_button_disabled")
+                        raise RuntimeError("Post button is not enabled.")
 
-                post_button.click()
+                    post_button.click()
 
-                # Wait for redirect / success
-                page.wait_for_timeout(5000)
-                final_url = page.url
+                    # Wait for redirect / success
+                    page.wait_for_timeout(5000)
+                    final_url = page.url
 
-                print(f"Post published successfully: {final_url}")
+                    print(f"Post published successfully: {final_url}")
+                    return final_url
 
-                browser.close()
+                except PlaywrightTimeoutError as ex:
+                    self._save_debug_artifacts(page, "timeout_error")
+                    raise RuntimeError("Error interacting with Reddit UI.") from ex
 
-                return final_url
+                except Exception:
+                    self._save_debug_artifacts(page, "unexpected_error")
+                    raise
 
-        except PlaywrightTimeoutError as ex:
-            if page is not None:
-                self._save_debug_artifacts(page, "timeout_error")
-            raise RuntimeError("Error interacting with Reddit UI.") from ex
+                finally:
+                    browser.close()
 
         except Exception:
-            if page is not None:
-                self._save_debug_artifacts(page, "unexpected_error")
             raise
-
-        finally:
-            if browser is not None:
-                try:
-                    browser.close()
-                except Exception:
-                    pass

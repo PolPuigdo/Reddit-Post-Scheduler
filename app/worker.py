@@ -9,7 +9,7 @@ from app.services.logger_service import setup_logger
 from app.services.reddit_playwright_publisher import RedditPlaywrightPublisher
 
 
-POLL_SECONDS = 30
+POLL_SECONDS = Config.WORKER_POLL_SECONDS
 
 logger = setup_logger(Config.LOG_FILE_PATH)
 

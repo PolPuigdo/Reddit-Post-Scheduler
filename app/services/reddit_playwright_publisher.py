@@ -45,6 +45,19 @@ class RedditPlaywrightPublisher:
                 page.goto(submit_url, wait_until="domcontentloaded")
                 page.wait_for_timeout(3000)
 
+                # If an image is provided, try to switch to the Images tab first.
+                # Some subreddits require using the Images composer explicitly,
+                # while others do not expose this tab at all.
+                if resolved_image_path:
+                    try:
+                        images_tab = page.get_by_role("tab", name="Images").first
+                        if images_tab.is_visible():
+                            print("Switching to Images tab...")
+                            images_tab.click()
+                            page.wait_for_timeout(1500)
+                    except Exception:
+                        print("Images tab not available. Continuing with default composer...")
+
                 # Fill title
                 print("Filling title...")
                 title_input = page.locator('textarea[name="title"]')

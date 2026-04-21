@@ -22,4 +22,5 @@ class Config:
         "PLAYWRIGHT_AUTH_FILE",
         str(BASE_DIR / "playwright" / ".auth" / "reddit.json")
     )
+    WORKER_POLL_SECONDS = int(os.getenv("WORKER_POLL_SECONDS", 30))
     

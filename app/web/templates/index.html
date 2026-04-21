@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Auto Post</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f7f7f7;
+            color: #222;
+        }
+
+        h1 {
+            margin-bottom: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        .empty {
+            padding: 20px;
+            background: white;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reddit Auto Post</h1>
+
+    <p>
+        <a href="/posts/new">Crear nueva publicación</a>
+    </p>
+
+    {% if posts %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Subreddit</th>
+                    <th>Estado</th>
+                    <th>Fecha programada (UTC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                    <tr>
+                        <td>{{ post.id }}</td>
+                        <td>{{ post.title }}</td>
+                        <td>{{ post.subreddit }}</td>
+                        <td>{{ post.status }}</td>
+                        <td>{{ post.scheduled_at_utc }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty">
+            No hay publicaciones programadas todavía.
+        </div>
+    {% endif %}
+</body>
+</html>

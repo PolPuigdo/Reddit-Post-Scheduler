@@ -1,7 +1,8 @@
 import sys
+from app.config import Config
 from app.services.reddit_playwright_publisher import RedditPlaywrightPublisher
 
-AUTH_FILE = "playwright/.auth/reddit.json"
+AUTH_FILE = Config.PLAYWRIGHT_AUTH_FILE
 
 def main():
     if len(sys.argv) < 5:
@@ -14,7 +15,11 @@ def main():
     body = sys.argv[3].strip()
     image_path = sys.argv[4].strip()
 
-    publisher = RedditPlaywrightPublisher(auth_file=AUTH_FILE)
+    publisher = RedditPlaywrightPublisher(
+        auth_file=AUTH_FILE,
+        headless=Config.PLAYWRIGHT_HEADLESS,
+    )
+    
     final_url = publisher.publish(
         subreddit=subreddit,
         title=title,

@@ -16,7 +16,8 @@ def create_app():
 
     file_storage_service = FileStorageService(Config.UPLOAD_FOLDER)
     reddit_publisher = RedditPlaywrightPublisher(
-        auth_file="playwright/.auth/reddit.json"
+        auth_file=Config.PLAYWRIGHT_AUTH_FILE,
+        headless=Config.PLAYWRIGHT_HEADLESS,
     )
 
     register_routes(app, file_storage_service, reddit_publisher)

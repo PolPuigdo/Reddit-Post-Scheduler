@@ -33,7 +33,8 @@ def run_once():
         return
 
     publisher = RedditPlaywrightPublisher(
-        auth_file="playwright/.auth/reddit.json"
+        auth_file=Config.PLAYWRIGHT_AUTH_FILE,
+        headless=Config.PLAYWRIGHT_HEADLESS,
     )
 
     for post in due_posts:

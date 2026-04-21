@@ -2,8 +2,9 @@ from pathlib import Path
 import sys
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
+from app.config import Config
 
-AUTH_FILE = Path("playwright/.auth/reddit.json")
+AUTH_FILE = Path(Config.PLAYWRIGHT_AUTH_FILE)
 
 def main():
     if not AUTH_FILE.exists():

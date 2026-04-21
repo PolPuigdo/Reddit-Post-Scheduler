@@ -13,77 +13,107 @@
             <a class="btn btn-secondary" href="/">&larr; Back to list</a>
         </nav>
 
-        <header class="page-header">
+        <header class="page-header detail-header">
             <div class="title-with-logo">
                 <img class="title-logo" src="{{ url_for('static', filename='img/app_logo.png') }}" alt="Reddit Scheduler logo">
                 <h1>Post details</h1>
             </div>
         </header>
 
-        <section class="card section">
-            <div class="detail-grid">
-                <div class="detail-label">ID:</div>
-                <div class="detail-value">{{ post.id }}</div>
+        <section class="card section detail-page">
+            <section class="detail-section">
+                <h2 class="section-title detail-section-title">Summary</h2>
+                <div class="detail-summary-grid">
+                    <article class="summary-item">
+                        <p class="summary-label">Title</p>
+                        <p class="summary-value">{{ post.title }}</p>
+                    </article>
 
-                <div class="detail-label">Title:</div>
-                <div class="detail-value">{{ post.title }}</div>
+                    <article class="summary-item">
+                        <p class="summary-label">Status</p>
+                        <p class="summary-value">
+                            <span class="status-badge status-{{ post.status }}">{{ post.status }}</span>
+                        </p>
+                    </article>
 
-                <div class="detail-label">Subreddit:</div>
-                <div class="detail-value">{{ post.subreddit }}</div>
+                    <article class="summary-item">
+                        <p class="summary-label">Scheduled date (UTC)</p>
+                        <p class="summary-value">{{ post.scheduled_at_utc }}</p>
+                    </article>
 
-                <div class="detail-label">Status:</div>
-                <div class="detail-value">
-                    <span class="status-badge status-{{ post.status }}">{{ post.status }}</span>
+                    <article class="summary-item">
+                        <p class="summary-label">Subreddit</p>
+                        <p class="summary-value">{{ post.subreddit }}</p>
+                    </article>
+
+                    <article class="summary-item">
+                        <p class="summary-label">Timezone</p>
+                        <p class="summary-value">{{ post.timezone }}</p>
+                    </article>
+
+                    <article class="summary-item">
+                        <p class="summary-label">Attempts</p>
+                        <p class="summary-value">{{ post.attempts }} / {{ post.max_attempts }}</p>
+                    </article>
                 </div>
+            </section>
 
-                <div class="detail-label">Scheduled date (UTC):</div>
-                <div class="detail-value">{{ post.scheduled_at_utc }}</div>
+            <section class="detail-section">
+                <h2 class="section-title detail-section-title">Content</h2>
+                <div class="detail-content-grid">
+                    <article class="detail-block">
+                        <h3 class="detail-block-title">Body</h3>
+                        <div class="body-box detail-body-box">{{ post.body or "-" }}</div>
+                    </article>
 
-                <div class="detail-label">Timezone:</div>
-                <div class="detail-value">{{ post.timezone }}</div>
-
-                <div class="detail-label">Attempts:</div>
-                <div class="detail-value">{{ post.attempts }} / {{ post.max_attempts }}</div>
-
-                <div class="detail-label">NSFW:</div>
-                <div class="detail-value">{{ post.nsfw }}</div>
-
-                <div class="detail-label">Spoiler:</div>
-                <div class="detail-value">{{ post.spoiler }}</div>
-
-                <div class="detail-label">Image path:</div>
-                <div class="detail-value">
-                    {{ post.image_path or "-" }}
-                    {% if image_filename %}
-                        <div class="image-preview">
-                            <img src="/uploads/{{ image_filename }}" alt="Uploaded image">
-                        </div>
-                    {% endif %}
+                    <article class="detail-block detail-media">
+                        <h3 class="detail-block-title">Image preview</h3>
+                        {% if image_filename %}
+                            <div class="image-preview detail-image-preview">
+                                <img src="/uploads/{{ image_filename }}" alt="Uploaded image">
+                            </div>
+                        {% else %}
+                            <div class="body-box detail-empty-media">No image attached.</div>
+                        {% endif %}
+                        <p class="detail-path"><strong>Image path:</strong> {{ post.image_path or "-" }}</p>
+                    </article>
                 </div>
+            </section>
 
-                <div class="detail-label">Reddit post id:</div>
-                <div class="detail-value">{{ post.reddit_post_id or "-" }}</div>
+            <details class="tech-panel" open>
+                <summary>Technical details</summary>
+                <div class="detail-grid tech-grid">
+                    <div class="detail-label">ID:</div>
+                    <div class="detail-value">{{ post.id }}</div>
 
-                <div class="detail-label">Reddit post url:</div>
-                <div class="detail-value">{{ post.reddit_post_url or "-" }}</div>
+                    <div class="detail-label">Reddit post id:</div>
+                    <div class="detail-value">{{ post.reddit_post_id or "-" }}</div>
 
-                <div class="detail-label">Error:</div>
-                <div class="detail-value">{{ post.error_message or "-" }}</div>
+                    <div class="detail-label">Reddit post url:</div>
+                    <div class="detail-value">{{ post.reddit_post_url or "-" }}</div>
 
-                <div class="detail-label">Created at UTC:</div>
-                <div class="detail-value">{{ post.created_at_utc }}</div>
+                    <div class="detail-label">Error:</div>
+                    <div class="detail-value">{{ post.error_message or "-" }}</div>
 
-                <div class="detail-label">Updated at UTC:</div>
-                <div class="detail-value">{{ post.updated_at_utc }}</div>
+                    <div class="detail-label">Created at UTC:</div>
+                    <div class="detail-value">{{ post.created_at_utc }}</div>
 
-                <div class="detail-label">Published at UTC:</div>
-                <div class="detail-value">{{ post.published_at_utc or "-" }}</div>
+                    <div class="detail-label">Updated at UTC:</div>
+                    <div class="detail-value">{{ post.updated_at_utc }}</div>
 
-                <div class="detail-label">Body:</div>
-                <div class="detail-value">
-                    <div class="body-box">{{ post.body or "-" }}</div>
+                    <div class="detail-label">Published at UTC:</div>
+                    <div class="detail-value">{{ post.published_at_utc or "-" }}</div>
+
+                    <div class="detail-label">Image path:</div>
+                    <div class="detail-value">{{ post.image_path or "-" }}</div>
+
+                    <div class="detail-label">NSFW:</div>
+                    <div class="detail-value">{{ post.nsfw }}</div>
+
+                    <div class="detail-label">Spoiler:</div>
+                    <div class="detail-value">{{ post.spoiler }}</div>
                 </div>
-            </div>
+            </details>
 
             {% if post.status == "pending" %}
                 <div class="detail-actions">

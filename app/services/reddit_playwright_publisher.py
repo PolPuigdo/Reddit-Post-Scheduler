@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+import random
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
@@ -34,6 +35,28 @@ class RedditPlaywrightPublisher:
         except Exception as ex:
             print(f"Could not save HTML dump: {ex}")
 
+    def _handle_protection_page(self, page, max_retries: int = 3) -> None:
+        """
+        Detect simple Reddit / Cloudflare protection pages and try to bypass them
+        by refreshing the page a few times.
+        """
+        for attempt in range(1, max_retries + 1):
+            content = page.content()
+
+            if (
+                "Prove your humanity" in content
+                or "You've been blocked by network security" in content
+                or "blocked by network security" in content
+            ):
+                print(f"Protection page detected (attempt {attempt}/{max_retries}). Refreshing page...")
+                page.reload(wait_until="domcontentloaded")
+                page.wait_for_timeout(3000 + random.randint(500, 1500))
+            else:
+                return
+
+        self._save_debug_artifacts(page, "protection_page")
+        raise RuntimeError("Protection page still present after refresh retries.")
+
     def publish(
         self,
         subreddit: str,
@@ -63,14 +86,29 @@ class RedditPlaywrightPublisher:
 
         try:
             with sync_playwright() as p:
-                browser = p.chromium.launch(headless=self.headless)
-                context = browser.new_context(storage_state=str(self.auth_file))
+                browser = p.chromium.launch(
+                    headless=self.headless,
+                    args=["--disable-blink-features=AutomationControlled"],
+                )
+
+                context = browser.new_context(
+                    storage_state=str(self.auth_file),
+                    user_agent=(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/122.0.0.0 Safari/537.36"
+                    ),
+                )
+
                 page = context.new_page()
 
                 try:
                     print(f"Opening submit page: {submit_url}")
                     page.goto(submit_url, wait_until="domcontentloaded")
-                    page.wait_for_timeout(3000)
+                    page.wait_for_timeout(3000 + random.randint(500, 1500))
+
+                    # Handle Reddit / Cloudflare protection pages if they appear
+                    self._handle_protection_page(page)
 
                     # If an image is provided, try to switch to the Images tab first.
                     # Some subreddits require using the Images composer explicitly,

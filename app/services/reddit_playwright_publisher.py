@@ -114,21 +114,29 @@ class RedditPlaywrightPublisher:
         self._set_switch_value(nsfw_switch, nsfw)
         self._set_switch_value(spoiler_switch, spoiler)
 
-        flair_radios = page.locator("faceplate-radio-input[name='flairId']")
-        if flair_radios.count() > 0:
-            target_flair_id = "" if flair_id is None else flair_id
-            target_flair = page.locator(
-                f"faceplate-radio-input[name='flairId'][value='{target_flair_id}']"
-            ).first
-
-            if target_flair.count() == 0 and target_flair_id:
-                view_all_button = page.locator("#view-all-flairs-button").first
-                if view_all_button.count() > 0 and view_all_button.is_visible():
-                    view_all_button.click()
-                    page.wait_for_timeout(700)
-                    target_flair = page.locator(
-                        f"faceplate-radio-input[name='flairId'][value='{target_flair_id}']"
+        if flair_id is not None:
+            view_all_button = page.locator("#view-all-flairs-button").first
+            if view_all_button.count() == 0 or not view_all_button.is_visible():
+                try:
+                    view_all_button = page.get_by_role(
+                        "button",
+                        name=re.compile(r"view all flairs", re.IGNORECASE),
                     ).first
+                except Exception:
+                    view_all_button = None
+
+            if (
+                view_all_button is not None
+                and view_all_button.count() > 0
+                and view_all_button.is_visible()
+                and view_all_button.is_enabled()
+            ):
+                view_all_button.click()
+                page.wait_for_timeout(700)
+
+            target_flair = page.locator(
+                f"faceplate-radio-input[name='flairId'][value='{flair_id}']"
+            ).first
 
             if target_flair.count() > 0 and target_flair.is_visible():
                 target_flair.click()

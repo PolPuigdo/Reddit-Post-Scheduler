@@ -117,19 +117,26 @@ class RedditComposerCapabilitiesService:
             pass
 
     def _handle_protection_page(self, page, max_retries: int = 3) -> None:
-        for _ in range(max_retries):
+        """
+        Detect simple Reddit / Cloudflare protection pages and try to bypass them
+        by refreshing the page a few times.
+        """
+        for attempt in range(1, max_retries + 1):
             content = page.content()
+
             if (
-                "Prove your humanity" not in content
-                and "blocked by network security" not in content
+                "Prove your humanity" in content
+                or "You've been blocked by network security" in content
+                or "blocked by network security" in content
             ):
+                print(f"Protection page detected (attempt {attempt}/{max_retries}). Refreshing page...")
+                page.reload(wait_until="domcontentloaded")
+                page.wait_for_timeout(3000 + random.randint(500, 1500))
+            else:
                 return
 
-            page.reload(wait_until="domcontentloaded")
-            page.wait_for_timeout(3000 + random.randint(500, 1500))
-
-        self._save_debug_artifacts(page, "capabilities_protection_page")
-        raise RuntimeError("Reddit protection page is blocking capabilities extraction.")
+        self._save_debug_artifacts(page, "protection_page")
+        raise RuntimeError("Protection page still present after refresh retries.")
 
     def _resolve_submit_url(self, target_type: str, subreddit: str | None) -> str:
         if target_type == "profile":
@@ -160,10 +167,33 @@ class RedditComposerCapabilitiesService:
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
+                channel="chrome",
                 headless=self.headless,
-                args=["--disable-blink-features=AutomationControlled"],
+                args=[
+                    "--no-sandbox",
+                    "--disable-gpu",
+                    "--disable-dev-shm-usage",
+                    "--window-size=1366,900",
+                    "--disable-blink-features=AutomationControlled",
+                ],
             )
-            context = browser.new_context(storage_state=str(self.auth_file))
+            
+            context = browser.new_context(
+                storage_state=str(self.auth_file),
+                locale="en-US",
+                timezone_id="Europe/Madrid",
+                device_scale_factor=1.0,
+                viewport={"width": 1366, "height": 900},
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/122.0.0.0 Safari/537.36"
+                ),
+            )
+
+            # “oculta” el webdriver:
+            context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
             page = context.new_page()
 
             try:

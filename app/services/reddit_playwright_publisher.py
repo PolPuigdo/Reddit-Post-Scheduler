@@ -195,18 +195,32 @@ class RedditPlaywrightPublisher:
         try:
             with sync_playwright() as p:
                 browser = p.chromium.launch(
+                    channel="chrome",
                     headless=self.headless,
-                    args=["--disable-blink-features=AutomationControlled"],
+                    args=[
+                        "--no-sandbox",
+                        "--disable-gpu",
+                        "--disable-dev-shm-usage",
+                        "--window-size=1366,900",
+                        "--disable-blink-features=AutomationControlled",
+                    ],
                 )
 
                 context = browser.new_context(
                     storage_state=str(self.auth_file),
+                    locale="en-US",
+                    timezone_id="Europe/Madrid",
+                    device_scale_factor=1.0,
+                    viewport={"width": 1366, "height": 900},
                     user_agent=(
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                         "AppleWebKit/537.36 (KHTML, like Gecko) "
                         "Chrome/122.0.0.0 Safari/537.36"
                     ),
                 )
+
+                # “oculta” el webdriver:
+                context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
                 page = context.new_page()
 

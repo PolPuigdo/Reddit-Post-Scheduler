@@ -13,6 +13,9 @@ class Config:
     APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
     APP_PORT = int(os.getenv("APP_PORT", 5000))
     DEBUG = os.getenv("DEBUG", "True") == "True"
+    SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
+    LOGIN_PASSWORD = os.getenv("LOGIN_PASSWORD", "").strip()
+    LOGIN_ENABLED = bool(LOGIN_PASSWORD)
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/app.db")
     UPLOAD_FOLDER = str(BASE_DIR / "data" / "uploads")
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 10 * 1024 * 1024))
@@ -24,3 +27,8 @@ class Config:
     )
     WORKER_POLL_SECONDS = int(os.getenv("WORKER_POLL_SECONDS", 30))
     DEBUG_ARTIFACTS_DIR = os.getenv("DEBUG_ARTIFACTS_DIR", "logs/debug")
+
+    if LOGIN_ENABLED and not SECRET_KEY:
+        raise ValueError(
+            "SECRET_KEY must be configured when LOGIN_PASSWORD is set."
+        )

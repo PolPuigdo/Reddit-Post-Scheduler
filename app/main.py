@@ -10,6 +10,8 @@ from app.web.routes import register_routes
 def create_app():
     app = Flask(__name__, template_folder="web/templates")
     app.config["MAX_CONTENT_LENGTH"] = Config.MAX_CONTENT_LENGTH
+    if Config.SECRET_KEY:
+        app.config["SECRET_KEY"] = Config.SECRET_KEY
 
     engine = init_db(Config.DATABASE_URL)
     Base.metadata.create_all(bind=engine)

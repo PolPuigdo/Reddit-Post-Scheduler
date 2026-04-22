@@ -9,8 +9,11 @@
 </head>
 <body>
     <main class="page">
-        <nav class="top-nav">
+        <nav class="top-nav top-nav-actions">
             <a class="btn btn-secondary" href="/posts/{{ post.id }}">&larr; Back to details</a>
+            <form class="inline-form" method="post" action="/logout">
+                <button class="btn btn-secondary" type="submit">Logout</button>
+            </form>
         </nav>
 
         <header class="page-header">

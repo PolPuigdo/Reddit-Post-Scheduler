@@ -1,6 +1,9 @@
 from datetime import timezone
+import hmac
 from pathlib import Path
-from flask import abort, current_app, redirect, render_template, request, send_from_directory, url_for
+from urllib.parse import urlparse
+
+from flask import abort, current_app, redirect, render_template, request, send_from_directory, session, url_for
 from app.config import Config
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.services.validation_service import PostValidationService
@@ -40,6 +43,74 @@ def register_routes(app, file_storage_service, reddit_publisher):
             post=post,
             image_filename=_image_filename(post.image_path),
         )
+
+    def _is_safe_next_url(next_url: str) -> bool:
+        if not next_url:
+            return False
+
+        parsed = urlparse(next_url)
+        if parsed.scheme or parsed.netloc:
+            return False
+
+        return next_url.startswith("/") and not next_url.startswith("//")
+
+    def _build_login_redirect_target() -> str:
+        if request.query_string:
+            return request.full_path
+        return request.path
+
+    @app.before_request
+    def require_access_code():
+        if not Config.LOGIN_ENABLED:
+            return None
+
+        if request.endpoint in {"login", "static"}:
+            return None
+
+        if session.get("access_granted") is True:
+            return None
+
+        return redirect(url_for("login", next=_build_login_redirect_target()))
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if not Config.LOGIN_ENABLED:
+            return redirect(url_for("home"))
+
+        if session.get("access_granted") is True:
+            return redirect(url_for("home"))
+
+        next_url = request.values.get("next", "")
+
+        if request.method == "POST":
+            submitted_password = request.form.get("password", "")
+            if hmac.compare_digest(submitted_password, Config.LOGIN_PASSWORD):
+                session.clear()
+                session["access_granted"] = True
+
+                if _is_safe_next_url(next_url):
+                    return redirect(next_url)
+
+                return redirect(url_for("home"))
+
+            return render_template(
+                "login.html",
+                error="Invalid access code.",
+                next_url=next_url if _is_safe_next_url(next_url) else "",
+            )
+
+        return render_template(
+            "login.html",
+            error=None,
+            next_url=next_url if _is_safe_next_url(next_url) else "",
+        )
+
+    @app.route("/logout", methods=["POST"])
+    def logout():
+        session.clear()
+        if Config.LOGIN_ENABLED:
+            return redirect(url_for("login"))
+        return redirect(url_for("home"))
 
     @app.route("/")
     def home():

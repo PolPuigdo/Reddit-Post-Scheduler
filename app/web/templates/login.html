@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access code</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/app_logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <main class="page auth-page">
+        <section class="card section auth-card">
+            <header class="page-header auth-header">
+                <div class="title-with-logo">
+                    <img class="title-logo" src="{{ url_for('static', filename='img/app_logo.png') }}" alt="Reddit Scheduler logo">
+                    <h1>Enter access code</h1>
+                </div>
+            </header>
+            <p class="auth-subtitle">This dashboard is private. Enter your access code to continue.</p>
+
+            {% if error %}
+                <div class="errors" role="alert" aria-live="polite">
+                    <strong>{{ error }}</strong>
+                </div>
+            {% endif %}
+
+            <form class="auth-form" method="post" action="/login">
+                {% if next_url %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                {% endif %}
+                <div class="field">
+                    <label for="password">Access code</label>
+                    <input
+                        class="auth-code-input"
+                        type="password"
+                        id="password"
+                        name="password"
+                        autocomplete="current-password"
+                        placeholder="Enter your access code"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <button class="btn btn-primary" type="submit">Unlock dashboard</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

@@ -9,6 +9,12 @@
 </head>
 <body>
     <main class="page">
+        <nav class="top-nav top-nav-actions">
+            <form class="inline-form" method="post" action="/logout">
+                <button class="btn btn-secondary" type="submit">Logout</button>
+            </form>
+        </nav>
+
         <header class="page-header home-header">
             <div class="brand">
                 <img class="brand-logo" src="{{ url_for('static', filename='img/app_logo.png') }}" alt="Reddit Scheduler logo">

@@ -90,6 +90,8 @@ Available variables:
 | `APP_HOST` | `0.0.0.0` | Flask server host |
 | `APP_PORT` | `5000` | Web app port |
 | `DEBUG` | `True` | Flask debug mode |
+| `SECRET_KEY` | *(empty)* | Flask session signing key. Required if `LOGIN_PASSWORD` is set. |
+| `LOGIN_PASSWORD` | *(empty)* | Optional access code for dashboard protection. |
 | `DATABASE_URL` | `sqlite:///data/app.db` | SQLite database URL |
 | `MAX_CONTENT_LENGTH` | `10485760` | Upload size limit (bytes) |
 | `LOG_FILE_PATH` | `logs/worker.log` | Worker log file |
@@ -97,6 +99,22 @@ Available variables:
 | `PLAYWRIGHT_AUTH_FILE` | `playwright/.auth/reddit.json` | Saved Reddit session |
 | `WORKER_POLL_SECONDS` | `30` | Worker polling interval (seconds) |
 | `DEBUG_ARTIFACTS_DIR` | `logs/debug` | Screenshots/HTML on Playwright errors |
+
+---
+
+## Simple dashboard access code (optional)
+
+If you want to prevent other users on your LAN from seeing your dashboard:
+
+1. Set `LOGIN_PASSWORD` in `.env` with your access code.
+2. Set `SECRET_KEY` in `.env` (any long random string).
+3. Restart the web app.
+
+Behavior:
+
+- `LOGIN_PASSWORD` empty or missing: dashboard remains open (no login screen).
+- `LOGIN_PASSWORD` set: dashboard is protected by `/login` and browser session cookie.
+- `LOGIN_PASSWORD` set but `SECRET_KEY` missing: app fails fast at startup with a config error.
 
 ---
 

@@ -25,16 +25,91 @@
         <a class="btn btn-primary home-add-btn" href="/posts/new">Create new post</a>
         <section class="card section posts-section">
             <h2 class="section-title">Scheduled posts</h2>
+            <form class="filters-form" method="get" action="/">
+                <input type="hidden" name="sort_by" value="{{ filters.sort_by }}">
+                <input type="hidden" name="sort_dir" value="{{ filters.sort_dir }}">
+
+                <div class="filters-grid">
+                    <div class="field filter-field">
+                        <label for="q">Search title/subreddit</label>
+                        <input
+                            type="text"
+                            id="q"
+                            name="q"
+                            placeholder="for example: pics"
+                            value="{{ filters.q }}"
+                        >
+                    </div>
+
+                    <div class="field filter-field">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            <option value="">All</option>
+                            {% for status_option in status_options %}
+                                <option value="{{ status_option }}" {% if filters.status == status_option %}selected{% endif %}>
+                                    {{ status_option }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="field filter-field">
+                        <label for="scheduled_from">Scheduled from</label>
+                        <input
+                            type="datetime-local"
+                            id="scheduled_from"
+                            name="scheduled_from"
+                            value="{{ filters.scheduled_from }}"
+                        >
+                    </div>
+
+                    <div class="field filter-field">
+                        <label for="scheduled_to">Scheduled to</label>
+                        <input
+                            type="datetime-local"
+                            id="scheduled_to"
+                            name="scheduled_to"
+                            value="{{ filters.scheduled_to }}"
+                        >
+                    </div>
+                </div>
+
+                <div class="filters-actions">
+                    <button class="btn btn-primary" type="submit">Apply filters</button>
+                    <a class="btn btn-secondary" href="/">Reset filters</a>
+                </div>
+            </form>
+
             {% if posts %}
                 <div class="data-table-wrap">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Title</th>
-                                <th>Subreddit</th>
-                                <th>Status</th>
-                                <th>Scheduled date (UTC)</th>
+                                <th>
+                                    <a class="sort-link {% if filters.sort_by == 'id' %}sort-link-active{% endif %}" href="{{ sort_links.id }}">
+                                        ID{% if filters.sort_by == "id" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a class="sort-link {% if filters.sort_by == 'title' %}sort-link-active{% endif %}" href="{{ sort_links.title }}">
+                                        Title{% if filters.sort_by == "title" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a class="sort-link {% if filters.sort_by == 'subreddit' %}sort-link-active{% endif %}" href="{{ sort_links.subreddit }}">
+                                        Subreddit{% if filters.sort_by == "subreddit" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a class="sort-link {% if filters.sort_by == 'status' %}sort-link-active{% endif %}" href="{{ sort_links.status }}">
+                                        Status{% if filters.sort_by == "status" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a class="sort-link {% if filters.sort_by == 'scheduled_at_utc' %}sort-link-active{% endif %}" href="{{ sort_links.scheduled_at_utc }}">
+                                        Scheduled date (UTC){% if filters.sort_by == "scheduled_at_utc" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
+                                    </a>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -56,7 +131,11 @@
                 </div>
             {% else %}
                 <div class="empty">
-                    There are no scheduled posts yet.
+                    {% if filters.is_active %}
+                        No posts match the current filters.
+                    {% else %}
+                        There are no scheduled posts yet.
+                    {% endif %}
                 </div>
             {% endif %}
         </section>

@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import datetime, timezone
 import hmac
 from pathlib import Path
 from urllib.parse import urlparse
@@ -11,6 +11,11 @@ from app.services.validation_service import PostValidationService
 
 def register_routes(app, file_storage_service, reddit_publisher):
     validation_service = PostValidationService()
+    allowed_status_values = ("pending", "publishing", "posted", "failed", "cancelled")
+    allowed_status_set = set(allowed_status_values)
+    allowed_sort_fields = ("id", "title", "subreddit", "status", "scheduled_at_utc")
+    allowed_sort_set = set(allowed_sort_fields)
+    allowed_sort_directions = {"asc", "desc"}
 
     def _image_filename(image_path: str | None) -> str | None:
         if not image_path:
@@ -58,6 +63,23 @@ def register_routes(app, file_storage_service, reddit_publisher):
         if request.query_string:
             return request.full_path
         return request.path
+
+    def _parse_local_datetime_to_utc(raw_value: str) -> datetime | None:
+        if not raw_value:
+            return None
+
+        try:
+            parsed_local = datetime.fromisoformat(raw_value)
+        except ValueError:
+            return None
+
+        if parsed_local.tzinfo is None:
+            local_timezone = datetime.now().astimezone().tzinfo
+            if local_timezone is None:
+                return None
+            parsed_local = parsed_local.replace(tzinfo=local_timezone)
+
+        return parsed_local.astimezone(timezone.utc)
 
     @app.before_request
     def require_access_code():
@@ -114,9 +136,77 @@ def register_routes(app, file_storage_service, reddit_publisher):
 
     @app.route("/")
     def home():
+        q = request.args.get("q", "").strip()
+
+        status = request.args.get("status", "").strip().lower()
+        if status not in allowed_status_set:
+            status = ""
+
+        scheduled_from = request.args.get("scheduled_from", "").strip()
+        scheduled_to = request.args.get("scheduled_to", "").strip()
+        scheduled_from_utc = _parse_local_datetime_to_utc(scheduled_from)
+        scheduled_to_utc = _parse_local_datetime_to_utc(scheduled_to)
+
+        if scheduled_from and scheduled_from_utc is None:
+            scheduled_from = ""
+        if scheduled_to and scheduled_to_utc is None:
+            scheduled_to = ""
+
+        sort_by = request.args.get("sort_by", "id").strip()
+        if sort_by not in allowed_sort_set:
+            sort_by = "id"
+
+        sort_dir = request.args.get("sort_dir", "desc").strip().lower()
+        if sort_dir not in allowed_sort_directions:
+            sort_dir = "desc"
+
         repo = ScheduledPostRepository()
-        posts = repo.get_all()
-        return render_template("index.html", posts=posts)
+        posts = repo.get_all(
+            q=q or None,
+            status=status or None,
+            scheduled_from_utc=scheduled_from_utc,
+            scheduled_to_utc=scheduled_to_utc,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+
+        base_params = {
+            "q": q,
+            "status": status,
+            "scheduled_from": scheduled_from,
+            "scheduled_to": scheduled_to,
+        }
+
+        sort_links: dict[str, str] = {}
+        for column in allowed_sort_fields:
+            next_dir = "asc"
+            if sort_by == column and sort_dir == "asc":
+                next_dir = "desc"
+
+            sort_links[column] = url_for(
+                "home",
+                **base_params,
+                sort_by=column,
+                sort_dir=next_dir,
+            )
+
+        filters = {
+            "q": q,
+            "status": status,
+            "scheduled_from": scheduled_from,
+            "scheduled_to": scheduled_to,
+            "sort_by": sort_by,
+            "sort_dir": sort_dir,
+            "is_active": bool(q or status or scheduled_from or scheduled_to),
+        }
+
+        return render_template(
+            "index.html",
+            posts=posts,
+            filters=filters,
+            sort_links=sort_links,
+            status_options=allowed_status_values,
+        )
 
     @app.route("/posts/new")
     def new_post():

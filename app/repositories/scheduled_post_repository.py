@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from sqlalchemy import or_
 import app.db as db
 from app.models import ScheduledPost
 
@@ -43,9 +44,39 @@ class ScheduledPostRepository:
             session.refresh(post)
             return post
 
-    def get_all(self) -> list[ScheduledPost]:
+    def get_all(
+        self,
+        q: str | None = None,
+        status: str | None = None,
+        scheduled_from_utc: datetime | None = None,
+        scheduled_to_utc: datetime | None = None,
+        sort_by: str = "id",
+        sort_dir: str = "desc",
+    ) -> list[ScheduledPost]:
         with db.SessionLocal() as session:
-            posts = session.query(ScheduledPost).order_by(ScheduledPost.id.desc()).all()
+            query = session.query(ScheduledPost)
+
+            if q:
+                pattern = f"%{q}%"
+                query = query.filter(
+                    or_(
+                        ScheduledPost.title.ilike(pattern),
+                        ScheduledPost.subreddit.ilike(pattern),
+                    )
+                )
+
+            if status:
+                query = query.filter(ScheduledPost.status == status)
+
+            if scheduled_from_utc is not None:
+                query = query.filter(ScheduledPost.scheduled_at_utc >= scheduled_from_utc)
+
+            if scheduled_to_utc is not None:
+                query = query.filter(ScheduledPost.scheduled_at_utc <= scheduled_to_utc)
+
+            sort_column = getattr(ScheduledPost, sort_by)
+            order_clause = sort_column.asc() if sort_dir == "asc" else sort_column.desc()
+            posts = query.order_by(order_clause).all()
             return posts
         
     def get_by_id(self, post_id: int) -> ScheduledPost | None:

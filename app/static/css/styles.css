@@ -140,6 +140,31 @@ h1 {
     padding: 1.75rem 1.5rem;
 }
 
+.filters-form {
+    margin: 0 0 1rem;
+    padding: 0.95rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.filter-field {
+    margin-bottom: 0;
+}
+
+.filters-actions {
+    margin-top: 0.7rem;
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
 .card {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 100%), var(--surface);
     border: 1px solid var(--border);
@@ -239,6 +264,28 @@ button:disabled,
     background: #232b3b;
     color: #d5deef;
     font-weight: 700;
+}
+
+.sort-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #d5deef;
+    text-decoration: none;
+}
+
+.sort-link:hover {
+    color: #f0f4fd;
+}
+
+.sort-link-active {
+    color: #ffbe98;
+}
+
+.sort-indicator {
+    display: inline-flex;
+    font-size: 0.8rem;
+    line-height: 1;
 }
 
 .data-table tbody tr:nth-child(even) {
@@ -347,6 +394,7 @@ input[type="text"],
 input[type="password"],
 input[type="datetime-local"],
 input[type="file"],
+select,
 textarea {
     width: 100%;
     border: 1px solid #3a455d;
@@ -626,6 +674,10 @@ textarea {
         padding: 1.2rem 1rem;
     }
 
+    .filters-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .detail-grid {
         grid-template-columns: 1fr;
         gap: 0.32rem;
@@ -697,6 +749,14 @@ textarea {
 
     .home-add-btn {
         margin-left: 0;
+    }
+
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filters-actions {
+        align-items: stretch;
     }
 
     .top-nav-actions {

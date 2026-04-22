@@ -13,7 +13,7 @@ class Config:
     APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
     APP_PORT = int(os.getenv("APP_PORT", 5000))
     DEBUG = os.getenv("DEBUG", "True") == "True"
-    SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
+    SECRET_KEY = os.getenv("SECRET_KEY", "default").strip()
     LOGIN_PASSWORD = os.getenv("LOGIN_PASSWORD", "").strip()
     LOGIN_ENABLED = bool(LOGIN_PASSWORD)
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/app.db")

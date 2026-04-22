@@ -173,7 +173,7 @@
                 </div>
             {% endif %}
 
-            {% if post.status == "cancelled" %}
+            {% if post.status in ("cancelled", "posted") %}
                 <div class="detail-actions">
                     <div class="detail-actions-group detail-actions-group-left">
                         <form

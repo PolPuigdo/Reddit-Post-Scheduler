@@ -758,7 +758,7 @@ def register_routes(app, file_storage_service, reddit_publisher, composer_capabi
         if post is None:
             abort(404)
 
-        if post.status != "cancelled":
+        if post.status not in {"cancelled", "posted"}:
             abort(400)
 
         image_paths = repo.get_image_paths(post_id)

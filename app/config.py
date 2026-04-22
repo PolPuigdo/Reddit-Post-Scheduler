@@ -28,6 +28,19 @@ class Config:
     WORKER_POLL_SECONDS = int(os.getenv("WORKER_POLL_SECONDS", 30))
     DEBUG_ARTIFACTS_DIR = os.getenv("DEBUG_ARTIFACTS_DIR", "logs/debug")
 
+    @classmethod
+    def ensure_runtime_directories(cls) -> None:
+        directories = [
+            Path(cls.UPLOAD_FOLDER),
+            Path(cls.LOG_FILE_PATH).expanduser().parent,
+            Path(cls.DEBUG_ARTIFACTS_DIR).expanduser(),
+            Path(cls.PLAYWRIGHT_AUTH_FILE).expanduser().parent,
+        ]
+
+        for directory in directories:
+            if str(directory).strip():
+                directory.mkdir(parents=True, exist_ok=True)
+
     if LOGIN_ENABLED and not SECRET_KEY:
         raise ValueError(
             "SECRET_KEY must be configured when LOGIN_PASSWORD is set."

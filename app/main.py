@@ -8,6 +8,8 @@ from app.web.routes import register_routes
 
 
 def create_app():
+    Config.ensure_runtime_directories()
+
     app = Flask(__name__, template_folder="web/templates")
     app.config["MAX_CONTENT_LENGTH"] = Config.MAX_CONTENT_LENGTH
     if Config.SECRET_KEY:

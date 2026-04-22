@@ -11,6 +11,8 @@ from app.services.reddit_playwright_publisher import RedditPlaywrightPublisher
 
 POLL_SECONDS = Config.WORKER_POLL_SECONDS
 
+Config.ensure_runtime_directories()
+
 logger = setup_logger(Config.LOG_FILE_PATH)
 
 

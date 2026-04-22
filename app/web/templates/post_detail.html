@@ -136,28 +136,34 @@
             </details>
 
             {% if post.status == "pending" %}
-                <div class="detail-actions">
-                    <a class="btn btn-secondary" href="/posts/{{ post.id }}/edit">Edit</a>
+                <div class="detail-actions detail-actions-split">
+                    <div class="detail-actions-group detail-actions-group-left">
+                        <form method="post" action="/posts/{{ post.id }}/cancel">
+                            <button class="btn btn-danger" type="submit">Cancel post</button>
+                        </form>
+                    </div>
 
-                    <form method="post" action="/posts/{{ post.id }}/cancel">
-                        <button class="btn btn-danger" type="submit">Cancel post</button>
-                    </form>
+                    <div class="detail-actions-group detail-actions-group-right">
+                        <a class="btn btn-secondary" href="/posts/{{ post.id }}/edit">Edit</a>
 
-                    <form method="post" action="/posts/{{ post.id }}/publish-now">
-                        <button class="btn btn-primary" type="submit">Publish now</button>
-                    </form>
+                        <form method="post" action="/posts/{{ post.id }}/publish-now">
+                            <button class="btn btn-primary" type="submit">Publish now</button>
+                        </form>
+                    </div>
                 </div>
             {% endif %}
 
             {% if post.status == "cancelled" %}
                 <div class="detail-actions">
-                    <form
-                        method="post"
-                        action="/posts/{{ post.id }}/delete"
-                        onsubmit="return confirm('This action will permanently delete this schedule. Continue?');"
-                    >
-                        <button class="btn btn-danger" type="submit">Delete schedule</button>
-                    </form>
+                    <div class="detail-actions-group detail-actions-group-left">
+                        <form
+                            method="post"
+                            action="/posts/{{ post.id }}/delete"
+                            onsubmit="return confirm('This action will permanently delete this schedule. Continue?');"
+                        >
+                            <button class="btn btn-danger" type="submit">Delete schedule</button>
+                        </form>
+                    </div>
                 </div>
             {% endif %}
         </section>

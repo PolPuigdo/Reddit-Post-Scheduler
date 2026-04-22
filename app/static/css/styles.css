@@ -571,9 +571,20 @@ textarea {
     display: flex;
     gap: 0.65rem;
     flex-wrap: wrap;
+    align-items: center;
     margin-top: 1.35rem;
     padding-top: 1.2rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-actions-group {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.detail-actions-group-right {
+    margin-left: auto;
 }
 
 .detail-actions form {
@@ -847,6 +858,10 @@ textarea {
 
     .filters-actions {
         align-items: stretch;
+    }
+
+    .detail-actions-group-right {
+        margin-left: 0;
     }
 
     .image-order-item {

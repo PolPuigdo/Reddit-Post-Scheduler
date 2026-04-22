@@ -130,8 +130,19 @@
             }
 
             function removeItem(index) {
-                state.splice(index, 1);
+                const [item] = state.splice(index, 1);
+                if (item && item.previewUrl) {
+                    URL.revokeObjectURL(item.previewUrl);
+                }
                 renderList();
+            }
+
+            function createPreview(item) {
+                const preview = document.createElement("img");
+                preview.className = "image-order-thumb";
+                preview.src = item.previewUrl;
+                preview.alt = item.file.name;
+                return preview;
             }
 
             function renderList() {
@@ -147,9 +158,19 @@
                         const row = document.createElement("li");
                         row.className = "image-order-item";
 
-                        const info = document.createElement("span");
-                        info.className = "image-order-label";
-                        info.textContent = `${index + 1}. ${item.file.name}`;
+                        const left = document.createElement("div");
+                        left.className = "image-order-left";
+                        left.appendChild(createPreview(item));
+
+                        const info = document.createElement("div");
+                        info.className = "image-order-meta";
+
+                        const label = document.createElement("span");
+                        label.className = "image-order-label";
+                        label.textContent = `${index + 1}. ${item.file.name}`;
+
+                        info.appendChild(label);
+                        left.appendChild(info);
 
                         const actions = document.createElement("div");
                         actions.className = "image-order-actions";
@@ -178,7 +199,7 @@
                         actions.appendChild(downBtn);
                         actions.appendChild(removeBtn);
 
-                        row.appendChild(info);
+                        row.appendChild(left);
                         row.appendChild(actions);
                         imageList.appendChild(row);
                     });
@@ -194,6 +215,7 @@
                     state.push({
                         key: `new:${Date.now()}_${idCounter++}`,
                         file,
+                        previewUrl: URL.createObjectURL(file),
                     });
                 });
                 renderList();

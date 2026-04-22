@@ -195,7 +195,6 @@ class RedditPlaywrightPublisher:
         try:
             with sync_playwright() as p:
                 browser = p.chromium.launch(
-                    channel="chrome",
                     headless=self.headless,
                     args=[
                         "--no-sandbox",

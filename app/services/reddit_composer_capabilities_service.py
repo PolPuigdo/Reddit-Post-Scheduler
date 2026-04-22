@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -167,7 +167,6 @@ class RedditComposerCapabilitiesService:
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
-                channel="chrome",
                 headless=self.headless,
                 args=[
                     "--no-sandbox",

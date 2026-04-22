@@ -5,15 +5,15 @@ from app.services.reddit_playwright_publisher import RedditPlaywrightPublisher
 AUTH_FILE = Config.PLAYWRIGHT_AUTH_FILE
 
 def main():
-    if len(sys.argv) < 5:
+    if len(sys.argv) < 4:
         raise RuntimeError(
-            "Use: python -m app.scripts.reddit_post <subreddit> <title> <body> <image_path>"
+            "Use: python -m app.scripts.reddit_post <subreddit> <title> <body> [image_path1 image_path2 ...]"
         )
 
     subreddit = sys.argv[1].strip()
     title = sys.argv[2].strip()
     body = sys.argv[3].strip()
-    image_path = sys.argv[4].strip()
+    image_paths = [arg.strip() for arg in sys.argv[4:] if arg.strip()]
 
     publisher = RedditPlaywrightPublisher(
         auth_file=AUTH_FILE,
@@ -24,7 +24,7 @@ def main():
         subreddit=subreddit,
         title=title,
         body=body,
-        image_path=image_path,
+        image_paths=image_paths,
     )
 
     print(f"Post successfully published: {final_url}")

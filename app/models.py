@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 from app.db import Base
@@ -31,3 +31,24 @@ class ScheduledPost(Base):
     created_at_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_at_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     published_at_utc: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class ScheduledPostImage(Base):
+    __tablename__ = "scheduled_post_images"
+    __table_args__ = (
+        Index(
+            "ix_scheduled_post_images_post_id_position",
+            "scheduled_post_id",
+            "position",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    scheduled_post_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("scheduled_posts.id"),
+        nullable=False,
+    )
+    image_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)

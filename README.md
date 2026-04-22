@@ -210,7 +210,7 @@ playwright/.auth/              # Saved Reddit session
 python -m app.scripts.reddit_login
 
 # Publish directly via script
-python -m app.scripts.reddit_post <subreddit> "<title>" "<body>" "<image_path>"
+python -m app.scripts.reddit_post <subreddit> "<title>" "<body>" "<image_path_1>" "<image_path_2>" ...
 ```
 
 ---

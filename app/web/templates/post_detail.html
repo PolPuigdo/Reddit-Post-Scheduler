@@ -70,15 +70,24 @@
                     </article>
 
                     <article class="detail-block detail-media">
-                        <h3 class="detail-block-title">Image preview</h3>
-                        {% if image_filename %}
-                            <div class="image-preview detail-image-preview">
-                                <img src="/uploads/{{ image_filename }}" alt="Uploaded image">
+                        <h3 class="detail-block-title">Images</h3>
+                        {% if image_items %}
+                            <div class="detail-image-gallery">
+                                {% for image in image_items %}
+                                    <figure class="detail-image-card">
+                                        <div class="image-preview detail-image-preview">
+                                            <img src="{{ image.url }}" alt="Uploaded image {{ loop.index }}">
+                                        </div>
+                                        <figcaption class="detail-path">
+                                            #{{ loop.index }} - {{ image.filename }}
+                                        </figcaption>
+                                    </figure>
+                                {% endfor %}
                             </div>
                         {% else %}
                             <div class="body-box detail-empty-media">No image attached.</div>
                         {% endif %}
-                        <p class="detail-path"><strong>Image path:</strong> {{ post.image_path or "-" }}</p>
+                        <p class="detail-path"><strong>Total images:</strong> {{ image_items|length }}</p>
                     </article>
                 </div>
             </section>
@@ -107,8 +116,16 @@
                     <div class="detail-label">Published at UTC:</div>
                     <div class="detail-value">{{ post.published_at_utc or "-" }}</div>
 
-                    <div class="detail-label">Image path:</div>
-                    <div class="detail-value">{{ post.image_path or "-" }}</div>
+                    <div class="detail-label">Image paths:</div>
+                    <div class="detail-value">
+                        {% if image_items %}
+                            {% for image in image_items %}
+                                {{ image.image_path }}{% if not loop.last %}<br>{% endif %}
+                            {% endfor %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
 
                     <div class="detail-label">NSFW:</div>
                     <div class="detail-value">{{ post.nsfw }}</div>

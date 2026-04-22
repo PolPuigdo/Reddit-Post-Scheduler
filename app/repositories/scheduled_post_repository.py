@@ -1,28 +1,93 @@
 from datetime import datetime, timezone
 from sqlalchemy import or_
 import app.db as db
-from app.models import ScheduledPost
+from app.models import ScheduledPost, ScheduledPostImage
 
 
 class ScheduledPostRepository:
+    @staticmethod
+    def _normalize_image_paths(
+        image_paths: list[str] | None = None,
+        image_path: str | None = None,
+    ) -> list[str]:
+        if image_paths is not None:
+            return [path for path in image_paths if path]
+
+        if image_path:
+            return [image_path]
+
+        return []
+
+    def _ensure_legacy_image_attachment(self, session, post: ScheduledPost | None) -> bool:
+        if post is None or not post.image_path:
+            return False
+
+        existing = (
+            session.query(ScheduledPostImage.id)
+            .filter(ScheduledPostImage.scheduled_post_id == post.id)
+            .first()
+        )
+        if existing is not None:
+            return False
+
+        session.add(
+            ScheduledPostImage(
+                scheduled_post_id=post.id,
+                image_path=post.image_path,
+                position=1,
+                created_at_utc=datetime.now(timezone.utc),
+            )
+        )
+        return True
+
+    def _replace_post_images(
+        self,
+        session,
+        post: ScheduledPost,
+        image_paths: list[str],
+    ) -> None:
+        (
+            session.query(ScheduledPostImage)
+            .filter(ScheduledPostImage.scheduled_post_id == post.id)
+            .delete(synchronize_session=False)
+        )
+
+        now = datetime.now(timezone.utc)
+        for index, path in enumerate(image_paths, start=1):
+            session.add(
+                ScheduledPostImage(
+                    scheduled_post_id=post.id,
+                    image_path=path,
+                    position=index,
+                    created_at_utc=now,
+                )
+            )
+
+        post.image_path = image_paths[0] if image_paths else None
+
     def create(
         self,
         title: str,
         subreddit: str,
         scheduled_at_utc: datetime,
         body: str | None = None,
+        image_paths: list[str] | None = None,
         image_path: str | None = None,
         timezone_name: str = "Europe/Madrid",
         nsfw: bool = False,
         spoiler: bool = False,
     ) -> ScheduledPost:
         now = datetime.now(timezone.utc)
+        normalized_image_paths = self._normalize_image_paths(
+            image_paths=image_paths,
+            image_path=image_path,
+        )
 
         post = ScheduledPost(
             title=title,
             body=body,
             subreddit=subreddit,
-            image_path=image_path,
+            image_path=normalized_image_paths[0] if normalized_image_paths else None,
             scheduled_at_utc=scheduled_at_utc,
             timezone=timezone_name,
             status="pending",
@@ -40,6 +105,14 @@ class ScheduledPostRepository:
 
         with db.SessionLocal() as session:
             session.add(post)
+            session.flush()
+
+            self._replace_post_images(
+                session=session,
+                post=post,
+                image_paths=normalized_image_paths,
+            )
+
             session.commit()
             session.refresh(post)
             return post
@@ -78,12 +151,41 @@ class ScheduledPostRepository:
             order_clause = sort_column.asc() if sort_dir == "asc" else sort_column.desc()
             posts = query.order_by(order_clause).all()
             return posts
-        
+
     def get_by_id(self, post_id: int) -> ScheduledPost | None:
         with db.SessionLocal() as session:
             post = session.get(ScheduledPost, post_id)
+            if post is None:
+                return None
+
+            changed = self._ensure_legacy_image_attachment(session, post)
+            if changed:
+                session.commit()
+
             return post
-        
+
+    def get_images(self, post_id: int) -> list[ScheduledPostImage]:
+        with db.SessionLocal() as session:
+            post = session.get(ScheduledPost, post_id)
+            if post is None:
+                return []
+
+            changed = self._ensure_legacy_image_attachment(session, post)
+            if changed:
+                session.commit()
+
+            images = (
+                session.query(ScheduledPostImage)
+                .filter(ScheduledPostImage.scheduled_post_id == post_id)
+                .order_by(ScheduledPostImage.position.asc(), ScheduledPostImage.id.asc())
+                .all()
+            )
+            return images
+
+    def get_image_paths(self, post_id: int) -> list[str]:
+        images = self.get_images(post_id)
+        return [image.image_path for image in images]
+
     def cancel(self, post_id: int) -> bool:
         with db.SessionLocal() as session:
             post = session.get(ScheduledPost, post_id)
@@ -110,10 +212,16 @@ class ScheduledPostRepository:
             if post.status != "cancelled":
                 return False
 
+            (
+                session.query(ScheduledPostImage)
+                .filter(ScheduledPostImage.scheduled_post_id == post_id)
+                .delete(synchronize_session=False)
+            )
+
             session.delete(post)
             session.commit()
             return True
-        
+
     def mark_posted(self, post_id: int, reddit_post_url: str) -> bool:
         with db.SessionLocal() as session:
             post = session.get(ScheduledPost, post_id)
@@ -148,7 +256,7 @@ class ScheduledPostRepository:
 
             session.commit()
             return True
-        
+
     def mark_publishing(self, post_id: int) -> bool:
         with db.SessionLocal() as session:
             post = session.get(ScheduledPost, post_id)
@@ -172,7 +280,8 @@ class ScheduledPostRepository:
         body: str | None,
         subreddit: str,
         scheduled_at_utc: datetime,
-        image_path: str | None,
+        image_paths: list[str] | None = None,
+        image_path: str | None = None,
         reset_attempts: bool = True,
     ) -> bool:
         with db.SessionLocal() as session:
@@ -184,20 +293,32 @@ class ScheduledPostRepository:
             if post.status != "pending":
                 return False
 
+            normalized_image_paths = self._normalize_image_paths(
+                image_paths=image_paths,
+                image_path=image_path,
+            )
+
+            self._ensure_legacy_image_attachment(session, post)
+
             post.title = title
             post.body = body
             post.subreddit = subreddit
             post.scheduled_at_utc = scheduled_at_utc
-            post.image_path = image_path
             post.updated_at_utc = datetime.now(timezone.utc)
 
             if reset_attempts:
                 post.attempts = 0
             post.error_message = None
 
+            self._replace_post_images(
+                session=session,
+                post=post,
+                image_paths=normalized_image_paths,
+            )
+
             session.commit()
             return True
-        
+
     def get_due_pending_posts(self, now_utc: datetime) -> list[ScheduledPost]:
         with db.SessionLocal() as session:
             posts = (
@@ -207,4 +328,12 @@ class ScheduledPostRepository:
                 .order_by(ScheduledPost.scheduled_at_utc.asc())
                 .all()
             )
+
+            changed = False
+            for post in posts:
+                changed = self._ensure_legacy_image_attachment(session, post) or changed
+
+            if changed:
+                session.commit()
+
             return posts

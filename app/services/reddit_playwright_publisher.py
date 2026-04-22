@@ -62,7 +62,7 @@ class RedditPlaywrightPublisher:
         subreddit: str,
         title: str,
         body: str | None = None,
-        image_path: str | None = None,
+        image_paths: list[str] | None = None,
     ) -> str:
         # Validate auth file
         if not self.auth_file.exists():
@@ -75,12 +75,16 @@ class RedditPlaywrightPublisher:
         if not title.strip():
             raise RuntimeError("Title cannot be empty.")
 
-        # Resolve image path if provided
-        resolved_image_path = None
-        if image_path:
+        resolved_image_paths: list[Path] = []
+        for image_path in image_paths or []:
+            if not image_path:
+                continue
+
             resolved_image_path = Path(image_path).resolve()
             if not resolved_image_path.exists():
                 raise RuntimeError(f"Image file not found: {resolved_image_path}")
+
+            resolved_image_paths.append(resolved_image_path)
 
         submit_url = f"https://www.reddit.com/r/{subreddit}/submit"
 
@@ -113,7 +117,7 @@ class RedditPlaywrightPublisher:
                     # If an image is provided, try to switch to the Images tab first.
                     # Some subreddits require using the Images composer explicitly,
                     # while others do not expose this tab at all.
-                    if resolved_image_path:
+                    if resolved_image_paths:
                         try:
                             images_tab = page.get_by_role("tab", name="Images").first
                             if images_tab.is_visible():
@@ -140,8 +144,8 @@ class RedditPlaywrightPublisher:
                         body_input.press_sequentially(body)
 
                     # Upload image if provided
-                    if resolved_image_path:
-                        print("Uploading image...")
+                    if resolved_image_paths:
+                        print(f"Uploading {len(resolved_image_paths)} image(s)...")
                         upload_button = page.locator('#device-upload-button:visible').first
                         upload_button.wait_for(state="visible", timeout=10000)
 
@@ -149,10 +153,10 @@ class RedditPlaywrightPublisher:
                             upload_button.click()
 
                         file_chooser = fc_info.value
-                        file_chooser.set_files(str(resolved_image_path))
+                        file_chooser.set_files([str(path) for path in resolved_image_paths])
 
                         print("Waiting for image processing...")
-                        page.wait_for_timeout(8000)
+                        page.wait_for_timeout(8000 + max(0, len(resolved_image_paths) - 1) * 2500)
 
                     # Submit post
                     print("Submitting post...")

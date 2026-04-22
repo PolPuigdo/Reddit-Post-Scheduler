@@ -36,6 +36,9 @@
             {% endif %}
 
             <form method="post" action="/posts/{{ post.id }}/edit" enctype="multipart/form-data">
+                <input type="hidden" id="image_order" name="image_order" value="">
+                <input type="hidden" id="new_image_keys" name="new_image_keys" value="">
+
                 <div class="field">
                     <label for="title">Title</label>
                     <input
@@ -78,38 +81,172 @@
                 </div>
 
                 <div class="field">
-                    <label>Current image</label>
-                    {% if image_filename %}
-                        <div class="image-preview">
-                            <img src="/uploads/{{ image_filename }}" alt="Current uploaded image">
-                        </div>
-                        <p class="detail-path"><strong>Image path:</strong> {{ post.image_path }}</p>
-                    {% else %}
-                        <div class="body-box detail-empty-media">No image attached.</div>
-                    {% endif %}
+                    <label for="images">Add images</label>
+                    <input type="file" id="images" name="images" accept=".jpg,.jpeg,.png,.webp" multiple>
+                    <small class="detail-path">Add more images and reorder everything below.</small>
                 </div>
 
                 <div class="field">
-                    <label for="image">Replace image</label>
-                    <input type="file" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
-                    <small class="detail-path">If you upload a new image, it replaces the current one.</small>
-                </div>
-
-                <div class="field">
-                    <label>
-                        <input
-                            type="checkbox"
-                            name="remove_image"
-                            value="1"
-                            {% if form_data and form_data.remove_image %}checked{% endif %}
-                        >
-                        Remove current image
-                    </label>
+                    <label>Image order</label>
+                    <ul id="edit-image-order-list" class="image-order-list"></ul>
                 </div>
 
                 <button class="btn btn-primary" type="submit">Save changes</button>
             </form>
         </section>
     </main>
+
+    <script>
+        (() => {
+            const imageInput = document.getElementById("images");
+            const imageOrderInput = document.getElementById("image_order");
+            const newImageKeysInput = document.getElementById("new_image_keys");
+            const imageList = document.getElementById("edit-image-order-list");
+
+            let idCounter = 0;
+            const items = [
+                {% for image in existing_images %}
+                {
+                    key: "existing:{{ image.id }}",
+                    type: "existing",
+                    filename: {{ image.filename|tojson }},
+                    previewUrl: {{ image.url|tojson }},
+                },
+                {% endfor %}
+            ];
+
+            function refreshHiddenFields() {
+                const orderedKeys = items.map((item) => item.key);
+                const newKeys = items
+                    .filter((item) => item.type === "new")
+                    .map((item) => item.key);
+
+                imageOrderInput.value = orderedKeys.join(",");
+                newImageKeysInput.value = newKeys.join(",");
+            }
+
+            function refreshInputFiles() {
+                const transfer = new DataTransfer();
+                items.forEach((item) => {
+                    if (item.type === "new") {
+                        transfer.items.add(item.file);
+                    }
+                });
+                imageInput.files = transfer.files;
+            }
+
+            function moveItem(index, offset) {
+                const nextIndex = index + offset;
+                if (nextIndex < 0 || nextIndex >= items.length) {
+                    return;
+                }
+
+                const [item] = items.splice(index, 1);
+                items.splice(nextIndex, 0, item);
+                renderList();
+            }
+
+            function removeItem(index) {
+                const [item] = items.splice(index, 1);
+                if (item && item.type === "new" && item.previewUrl) {
+                    URL.revokeObjectURL(item.previewUrl);
+                }
+                renderList();
+            }
+
+            function createPreview(item) {
+                const preview = document.createElement("img");
+                preview.className = "image-order-thumb";
+                preview.src = item.previewUrl;
+                preview.alt = item.filename;
+                return preview;
+            }
+
+            function renderList() {
+                imageList.innerHTML = "";
+
+                if (!items.length) {
+                    const empty = document.createElement("li");
+                    empty.className = "image-order-empty";
+                    empty.textContent = "No images attached.";
+                    imageList.appendChild(empty);
+                } else {
+                    items.forEach((item, index) => {
+                        const row = document.createElement("li");
+                        row.className = "image-order-item";
+
+                        const left = document.createElement("div");
+                        left.className = "image-order-left";
+                        left.appendChild(createPreview(item));
+
+                        const info = document.createElement("div");
+                        info.className = "image-order-meta";
+
+                        const label = document.createElement("span");
+                        label.className = "image-order-label";
+                        label.textContent = `${index + 1}. ${item.filename}`;
+
+                        const type = document.createElement("small");
+                        type.className = "detail-path";
+                        type.textContent = item.type === "existing" ? "Existing image" : "New image";
+
+                        info.appendChild(label);
+                        info.appendChild(type);
+                        left.appendChild(info);
+
+                        const actions = document.createElement("div");
+                        actions.className = "image-order-actions";
+
+                        const upBtn = document.createElement("button");
+                        upBtn.type = "button";
+                        upBtn.className = "btn btn-secondary btn-compact";
+                        upBtn.textContent = "Up";
+                        upBtn.disabled = index === 0;
+                        upBtn.addEventListener("click", () => moveItem(index, -1));
+
+                        const downBtn = document.createElement("button");
+                        downBtn.type = "button";
+                        downBtn.className = "btn btn-secondary btn-compact";
+                        downBtn.textContent = "Down";
+                        downBtn.disabled = index === items.length - 1;
+                        downBtn.addEventListener("click", () => moveItem(index, 1));
+
+                        const removeBtn = document.createElement("button");
+                        removeBtn.type = "button";
+                        removeBtn.className = "btn btn-danger btn-compact";
+                        removeBtn.textContent = "Remove";
+                        removeBtn.addEventListener("click", () => removeItem(index));
+
+                        actions.appendChild(upBtn);
+                        actions.appendChild(downBtn);
+                        actions.appendChild(removeBtn);
+
+                        row.appendChild(left);
+                        row.appendChild(actions);
+                        imageList.appendChild(row);
+                    });
+                }
+
+                refreshInputFiles();
+                refreshHiddenFields();
+            }
+
+            imageInput.addEventListener("change", () => {
+                const selectedFiles = Array.from(imageInput.files || []);
+                selectedFiles.forEach((file) => {
+                    items.push({
+                        key: `new:${Date.now()}_${idCounter++}`,
+                        type: "new",
+                        filename: file.name,
+                        file,
+                        previewUrl: URL.createObjectURL(file),
+                    });
+                });
+                renderList();
+            });
+
+            renderList();
+        })();
+    </script>
 </body>
 </html>

@@ -383,6 +383,78 @@ button:disabled,
     margin-bottom: 1rem;
 }
 
+.image-order-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.image-order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-sm);
+    background: rgba(19, 25, 38, 0.75);
+    padding: 0.55rem 0.65rem;
+}
+
+.image-order-left {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.image-order-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.2rem;
+}
+
+.image-order-label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.image-order-actions {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.image-order-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #3a455d;
+    background: #101729;
+    flex-shrink: 0;
+}
+
+.btn-compact {
+    padding: 0.44rem 0.58rem;
+    font-size: 0.82rem;
+}
+
+.image-order-empty {
+    color: var(--text-muted);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.8rem;
+}
+
 .field label {
     display: block;
     margin-bottom: 0.42rem;
@@ -593,6 +665,20 @@ textarea {
     gap: 0.7rem;
 }
 
+.detail-image-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.detail-image-card {
+    margin: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    background: rgba(19, 25, 38, 0.78);
+    padding: 0.55rem;
+}
+
 .detail-image-preview {
     width: 100%;
     padding: 0.8rem;
@@ -695,6 +781,10 @@ textarea {
         grid-template-columns: 1fr;
     }
 
+    .detail-image-gallery {
+        grid-template-columns: 1fr;
+    }
+
     .detail-body-box {
         min-height: 160px;
     }
@@ -757,6 +847,16 @@ textarea {
 
     .filters-actions {
         align-items: stretch;
+    }
+
+    .image-order-item {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .image-order-actions {
+        width: 100%;
+        justify-content: stretch;
     }
 
     .top-nav-actions {

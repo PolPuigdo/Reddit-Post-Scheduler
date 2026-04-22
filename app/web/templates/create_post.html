@@ -36,6 +36,9 @@
             {% endif %}
 
             <form method="post" action="/posts" enctype="multipart/form-data">
+                <input type="hidden" id="image_order" name="image_order" value="">
+                <input type="hidden" id="new_image_keys" name="new_image_keys" value="">
+
                 <div class="field">
                     <label for="title">Title</label>
                     <input
@@ -67,8 +70,14 @@
                 </div>
 
                 <div class="field">
-                    <label for="image">Image</label>
-                    <input type="file" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
+                    <label for="images">Images</label>
+                    <input type="file" id="images" name="images" accept=".jpg,.jpeg,.png,.webp" multiple>
+                    <small class="detail-path">You can upload multiple images and reorder them before saving.</small>
+                </div>
+
+                <div class="field">
+                    <label>Image order</label>
+                    <ul id="create-image-order-list" class="image-order-list"></ul>
                 </div>
 
                 <div class="field">
@@ -86,5 +95,112 @@
             </form>
         </section>
     </main>
+
+    <script>
+        (() => {
+            const imageInput = document.getElementById("images");
+            const imageOrderInput = document.getElementById("image_order");
+            const newImageKeysInput = document.getElementById("new_image_keys");
+            const imageList = document.getElementById("create-image-order-list");
+
+            const state = [];
+            let idCounter = 0;
+
+            function refreshHiddenFields() {
+                const keys = state.map((item) => item.key);
+                imageOrderInput.value = keys.join(",");
+                newImageKeysInput.value = keys.join(",");
+            }
+
+            function refreshInputFiles() {
+                const transfer = new DataTransfer();
+                state.forEach((item) => transfer.items.add(item.file));
+                imageInput.files = transfer.files;
+            }
+
+            function moveItem(index, offset) {
+                const nextIndex = index + offset;
+                if (nextIndex < 0 || nextIndex >= state.length) {
+                    return;
+                }
+
+                const [item] = state.splice(index, 1);
+                state.splice(nextIndex, 0, item);
+                renderList();
+            }
+
+            function removeItem(index) {
+                state.splice(index, 1);
+                renderList();
+            }
+
+            function renderList() {
+                imageList.innerHTML = "";
+
+                if (!state.length) {
+                    const empty = document.createElement("li");
+                    empty.className = "image-order-empty";
+                    empty.textContent = "No images selected.";
+                    imageList.appendChild(empty);
+                } else {
+                    state.forEach((item, index) => {
+                        const row = document.createElement("li");
+                        row.className = "image-order-item";
+
+                        const info = document.createElement("span");
+                        info.className = "image-order-label";
+                        info.textContent = `${index + 1}. ${item.file.name}`;
+
+                        const actions = document.createElement("div");
+                        actions.className = "image-order-actions";
+
+                        const upBtn = document.createElement("button");
+                        upBtn.type = "button";
+                        upBtn.className = "btn btn-secondary btn-compact";
+                        upBtn.textContent = "Up";
+                        upBtn.disabled = index === 0;
+                        upBtn.addEventListener("click", () => moveItem(index, -1));
+
+                        const downBtn = document.createElement("button");
+                        downBtn.type = "button";
+                        downBtn.className = "btn btn-secondary btn-compact";
+                        downBtn.textContent = "Down";
+                        downBtn.disabled = index === state.length - 1;
+                        downBtn.addEventListener("click", () => moveItem(index, 1));
+
+                        const removeBtn = document.createElement("button");
+                        removeBtn.type = "button";
+                        removeBtn.className = "btn btn-danger btn-compact";
+                        removeBtn.textContent = "Remove";
+                        removeBtn.addEventListener("click", () => removeItem(index));
+
+                        actions.appendChild(upBtn);
+                        actions.appendChild(downBtn);
+                        actions.appendChild(removeBtn);
+
+                        row.appendChild(info);
+                        row.appendChild(actions);
+                        imageList.appendChild(row);
+                    });
+                }
+
+                refreshInputFiles();
+                refreshHiddenFields();
+            }
+
+            imageInput.addEventListener("change", () => {
+                const selectedFiles = Array.from(imageInput.files || []);
+                selectedFiles.forEach((file) => {
+                    state.push({
+                        key: `new:${Date.now()}_${idCounter++}`,
+                        file,
+                    });
+                });
+                renderList();
+            });
+
+            renderList();
+        })();
+    </script>
 </body>
 </html>

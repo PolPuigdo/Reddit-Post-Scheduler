@@ -52,11 +52,12 @@ def run_once():
 
         try:
             # Execute publish
+            image_paths = repo.get_image_paths(post.id)
             final_url = publisher.publish(
                 subreddit=post.subreddit,
                 title=post.title,
                 body=post.body,
-                image_path=post.image_path,
+                image_paths=image_paths,
             )
 
             # Mark as successfully published

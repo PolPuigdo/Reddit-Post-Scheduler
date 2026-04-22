@@ -25,7 +25,12 @@
 
         <section class="card section detail-page">
             <section class="detail-section">
-                <h2 class="section-title detail-section-title">Summary</h2>
+                <div class="detail-section-head">
+                    <h2 class="section-title detail-section-title">Summary</h2>
+                    <span class="content-rating-badge {% if post.nsfw %}content-rating-nsfw{% else %}content-rating-sfw{% endif %}">
+                        {% if post.nsfw %}NSFW{% else %}SFW{% endif %}
+                    </span>
+                </div>
                 <div class="detail-summary-grid">
                     <article class="summary-item">
                         <p class="summary-label">Title</p>
@@ -137,9 +142,6 @@
                             -
                         {% endif %}
                     </div>
-
-                    <div class="detail-label">NSFW:</div>
-                    <div class="detail-value">{{ post.nsfw }}</div>
 
                     <div class="detail-label">Spoiler:</div>
                     <div class="detail-value">{{ post.spoiler }}</div>

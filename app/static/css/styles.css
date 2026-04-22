@@ -613,6 +613,44 @@ textarea {
     margin-bottom: 0.9rem;
 }
 
+.detail-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+    margin-bottom: 0.9rem;
+}
+
+.detail-section-head .detail-section-title {
+    margin-bottom: 0;
+}
+
+.content-rating-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.26rem 0.64rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.content-rating-sfw {
+    background: rgba(162, 172, 189, 0.14);
+    color: #cdd4e2;
+    border-color: rgba(162, 172, 189, 0.32);
+}
+
+.content-rating-nsfw {
+    background: rgba(184, 139, 165, 0.16);
+    color: #e7bfd4;
+    border-color: rgba(184, 139, 165, 0.36);
+}
+
 .detail-summary-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

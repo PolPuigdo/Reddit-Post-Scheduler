@@ -35,76 +35,166 @@
                 </div>
             {% endif %}
 
-            <form method="post" action="/posts" enctype="multipart/form-data">
+            <form id="create-post-form" method="post" action="/posts" enctype="multipart/form-data">
                 <input type="hidden" id="image_order" name="image_order" value="">
                 <input type="hidden" id="new_image_keys" name="new_image_keys" value="">
+                <input type="hidden" id="capabilities_json" name="capabilities_json" value="">
 
-                <div class="field">
-                    <label for="title">Title</label>
-                    <input
-                        type="text"
-                        id="title"
-                        name="title"
-                        required
-                        maxlength="300"
-                        value="{{ form_data.title if form_data else '' }}"
-                    >
-                </div>
+                <section id="step-1" class="field">
+                    <h2 class="section-title">Step 1: Choose destination</h2>
 
-                <div class="field">
-                    <label for="body">Body</label>
-                    <textarea id="body" name="body">{{ form_data.body if form_data else '' }}</textarea>
-                </div>
+                    <div class="field">
+                        <label>Destination type</label>
+                        <label>
+                            <input type="radio" name="target_type" value="subreddit" checked>
+                            Subreddit
+                        </label>
+                        <label>
+                            <input type="radio" name="target_type" value="profile">
+                            My profile
+                        </label>
+                    </div>
 
-                <div class="field">
-                    <label for="subreddit">Subreddit</label>
-                    <input
-                        type="text"
-                        id="subreddit"
-                        name="subreddit"
-                        required
-                        maxlength="100"
-                        placeholder="for example: pics"
-                        value="{{ form_data.subreddit if form_data else '' }}"
-                    >
-                </div>
+                    <div class="field" id="subreddit-field">
+                        <label for="subreddit">Subreddit</label>
+                        <input
+                            type="text"
+                            id="subreddit"
+                            name="subreddit"
+                            maxlength="100"
+                            placeholder="for example: pics"
+                            value="{{ form_data.subreddit if form_data else '' }}"
+                        >
+                    </div>
 
-                <div class="field">
-                    <label for="images">Images</label>
-                    <input type="file" id="images" name="images" accept=".jpg,.jpeg,.png,.webp" multiple>
-                    <small class="detail-path">You can upload multiple images and reorder them before saving.</small>
-                </div>
+                    <div id="capabilities-fetch-error" class="errors" style="display:none;" role="alert" aria-live="polite"></div>
+                    <button id="load-capabilities-btn" class="btn btn-secondary" type="button">Continue</button>
+                </section>
 
-                <div class="field">
-                    <label>Image order</label>
-                    <ul id="create-image-order-list" class="image-order-list"></ul>
-                </div>
+                <section id="step-2" class="field" style="display:none;">
+                    <h2 class="section-title">Step 2: Fill post details</h2>
+                    <p id="target-summary" class="detail-path"></p>
 
-                <div class="field">
-                    <label for="scheduled_at">Date and time</label>
-                    <input
-                        type="datetime-local"
-                        id="scheduled_at"
-                        name="scheduled_at"
-                        required
-                        value="{{ form_data.scheduled_at if form_data else '' }}"
-                    >
-                </div>
+                    <div class="field">
+                        <label for="title">Title</label>
+                        <input
+                            type="text"
+                            id="title"
+                            name="title"
+                            required
+                            maxlength="300"
+                            value="{{ form_data.title if form_data else '' }}"
+                        >
+                    </div>
 
-                <button class="btn btn-primary" type="submit">Save post</button>
+                    <div class="field">
+                        <label for="body">Body</label>
+                        <textarea id="body" name="body">{{ form_data.body if form_data else '' }}</textarea>
+                    </div>
+
+                    <div class="field">
+                        <label for="images">Images</label>
+                        <input type="file" id="images" name="images" accept=".jpg,.jpeg,.png,.webp" multiple>
+                        <small id="images-help" class="detail-path">You can upload multiple images and reorder them before saving.</small>
+                    </div>
+
+                    <div class="field">
+                        <label>Image order</label>
+                        <ul id="create-image-order-list" class="image-order-list"></ul>
+                    </div>
+
+                    <div id="flair-field" class="field" style="display:none;">
+                        <label for="flair_id">Flair</label>
+                        <select id="flair_id" name="flair_id"></select>
+                    </div>
+
+                    <div id="tags-field" class="field" style="display:none;">
+                        <label>Tags</label>
+                        <label id="nsfw-wrapper" style="display:none;">
+                            <input type="checkbox" id="nsfw" name="nsfw" value="1">
+                            NSFW
+                        </label>
+                        <label id="spoiler-wrapper" style="display:none;">
+                            <input type="checkbox" id="spoiler" name="spoiler" value="1">
+                            Spoiler
+                        </label>
+                    </div>
+
+                    <div class="field">
+                        <label for="scheduled_at">Date and time</label>
+                        <input
+                            type="datetime-local"
+                            id="scheduled_at"
+                            name="scheduled_at"
+                            required
+                            value="{{ form_data.scheduled_at if form_data else '' }}"
+                        >
+                    </div>
+
+                    <button id="save-post-btn" class="btn btn-primary" type="submit">Save post</button>
+                </section>
             </form>
         </section>
     </main>
 
     <script>
         (() => {
+            const initialFormData = {{ (form_data or {})|tojson }};
+            const initialCapabilities = {{ capabilities|tojson }};
+            const initialTargetLabel = {{ target_label|tojson }};
+
+            const form = document.getElementById("create-post-form");
+            const targetRadios = Array.from(document.querySelectorAll("input[name='target_type']"));
+            const subredditInput = document.getElementById("subreddit");
+            const subredditField = document.getElementById("subreddit-field");
+            const loadCapabilitiesButton = document.getElementById("load-capabilities-btn");
+            const capabilitiesError = document.getElementById("capabilities-fetch-error");
+            const capabilitiesInput = document.getElementById("capabilities_json");
+            const step2 = document.getElementById("step-2");
+            const targetSummary = document.getElementById("target-summary");
+
             const imageInput = document.getElementById("images");
+            const imagesHelp = document.getElementById("images-help");
             const imageOrderInput = document.getElementById("image_order");
             const newImageKeysInput = document.getElementById("new_image_keys");
             const imageList = document.getElementById("create-image-order-list");
 
+            const flairField = document.getElementById("flair-field");
+            const flairSelect = document.getElementById("flair_id");
+            const tagsField = document.getElementById("tags-field");
+            const nsfwWrapper = document.getElementById("nsfw-wrapper");
+            const spoilerWrapper = document.getElementById("spoiler-wrapper");
+            const nsfwCheckbox = document.getElementById("nsfw");
+            const spoilerCheckbox = document.getElementById("spoiler");
+
+            let loadedCapabilities = null;
             const state = [];
             let idCounter = 0;
+
+            function setFetchError(message) {
+                if (!message) {
+                    capabilitiesError.style.display = "none";
+                    capabilitiesError.textContent = "";
+                    return;
+                }
+                capabilitiesError.style.display = "block";
+                capabilitiesError.textContent = message;
+            }
+
+            function getTargetType() {
+                const selected = targetRadios.find((radio) => radio.checked);
+                return selected ? selected.value : "subreddit";
+            }
+
+            function refreshTargetInputs() {
+                const targetType = getTargetType();
+                const isSubreddit = targetType === "subreddit";
+                subredditField.style.display = isSubreddit ? "block" : "none";
+                subredditInput.required = isSubreddit;
+                if (!isSubreddit) {
+                    subredditInput.value = "";
+                }
+            }
 
             function refreshHiddenFields() {
                 const keys = state.map((item) => item.key);
@@ -209,9 +299,161 @@
                 refreshHiddenFields();
             }
 
+            function renderFlairs(capabilities) {
+                if (!capabilities.has_flairs) {
+                    flairField.style.display = "none";
+                    flairSelect.required = false;
+                    flairSelect.innerHTML = "";
+                    return;
+                }
+
+                flairField.style.display = "block";
+                flairSelect.innerHTML = "";
+                (capabilities.flairs || []).forEach((flair) => {
+                    const option = document.createElement("option");
+                    option.value = flair.id || "";
+                    option.textContent = flair.text || (flair.id || "No flair");
+                    flairSelect.appendChild(option);
+                });
+
+                flairSelect.required = Boolean(capabilities.flair_required);
+                const initialFlairId = (initialFormData.flair_id || "").toString();
+                if ([...flairSelect.options].some((option) => option.value === initialFlairId)) {
+                    flairSelect.value = initialFlairId;
+                } else if (flairSelect.options.length > 0) {
+                    flairSelect.selectedIndex = 0;
+                }
+            }
+
+            function renderTags(capabilities) {
+                if (!capabilities.has_tags) {
+                    tagsField.style.display = "none";
+                    nsfwWrapper.style.display = "none";
+                    spoilerWrapper.style.display = "none";
+                    nsfwCheckbox.checked = false;
+                    spoilerCheckbox.checked = false;
+                    return;
+                }
+
+                tagsField.style.display = "block";
+
+                if (capabilities.nsfw_available || capabilities.nsfw_forced_on) {
+                    nsfwWrapper.style.display = "block";
+                    nsfwCheckbox.checked = Boolean(initialFormData.nsfw);
+                    if (capabilities.nsfw_forced_on) {
+                        nsfwCheckbox.checked = true;
+                        nsfwCheckbox.disabled = true;
+                    } else {
+                        nsfwCheckbox.disabled = false;
+                    }
+                } else {
+                    nsfwWrapper.style.display = "none";
+                    nsfwCheckbox.checked = false;
+                    nsfwCheckbox.disabled = false;
+                }
+
+                if (capabilities.spoiler_available) {
+                    spoilerWrapper.style.display = "block";
+                    spoilerCheckbox.checked = Boolean(initialFormData.spoiler);
+                    spoilerCheckbox.disabled = false;
+                } else {
+                    spoilerWrapper.style.display = "none";
+                    spoilerCheckbox.checked = false;
+                    spoilerCheckbox.disabled = false;
+                }
+            }
+
+            function applyImageRules(capabilities) {
+                if (capabilities.max_images === 1) {
+                    imageInput.removeAttribute("multiple");
+                    imagesHelp.textContent = "This destination only allows one image.";
+                    while (state.length > 1) {
+                        const item = state.pop();
+                        if (item && item.previewUrl) {
+                            URL.revokeObjectURL(item.previewUrl);
+                        }
+                    }
+                    renderList();
+                } else {
+                    imageInput.setAttribute("multiple", "multiple");
+                    imagesHelp.textContent = "You can upload multiple images and reorder them before saving.";
+                }
+
+                imageInput.required = Boolean(capabilities.image_required);
+            }
+
+            function showStep2(capabilities, label) {
+                loadedCapabilities = capabilities;
+                capabilitiesInput.value = JSON.stringify(capabilities);
+                step2.style.display = "block";
+                targetSummary.textContent = `Destination: ${label || "-"}`;
+                renderFlairs(capabilities);
+                renderTags(capabilities);
+                applyImageRules(capabilities);
+            }
+
+            async function loadCapabilities() {
+                setFetchError("");
+                const targetType = getTargetType();
+                const subreddit = subredditInput.value.trim();
+
+                if (targetType === "subreddit" && !subreddit) {
+                    setFetchError("Subreddit is required.");
+                    return;
+                }
+
+                if (targetType === "subreddit" && subreddit.includes(" ")) {
+                    setFetchError("Subreddit must not contain spaces.");
+                    return;
+                }
+
+                loadCapabilitiesButton.disabled = true;
+                loadCapabilitiesButton.textContent = "Loading...";
+
+                try {
+                    const response = await fetch("/posts/capabilities", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            target_type: targetType,
+                            subreddit: subreddit,
+                        }),
+                    });
+
+                    const payload = await response.json();
+                    if (!response.ok || !payload.ok) {
+                        throw new Error(payload.error || "Could not load capabilities.");
+                    }
+
+                    showStep2(payload.capabilities, payload.target_label);
+                } catch (error) {
+                    setFetchError(error.message || "Could not load capabilities.");
+                } finally {
+                    loadCapabilitiesButton.disabled = false;
+                    loadCapabilitiesButton.textContent = "Continue";
+                }
+            }
+
+            targetRadios.forEach((radio) => {
+                radio.addEventListener("change", () => {
+                    refreshTargetInputs();
+                    loadedCapabilities = null;
+                    capabilitiesInput.value = "";
+                    step2.style.display = "none";
+                    setFetchError("");
+                });
+            });
+
+            loadCapabilitiesButton.addEventListener("click", loadCapabilities);
+
             imageInput.addEventListener("change", () => {
                 const selectedFiles = Array.from(imageInput.files || []);
+                const maxImages = loadedCapabilities && loadedCapabilities.max_images === 1 ? 1 : null;
+
                 selectedFiles.forEach((file) => {
+                    if (maxImages === 1 && state.length >= 1) {
+                        return;
+                    }
                     state.push({
                         key: `new:${Date.now()}_${idCounter++}`,
                         file,
@@ -221,7 +463,31 @@
                 renderList();
             });
 
+            form.addEventListener("submit", (event) => {
+                if (!capabilitiesInput.value) {
+                    event.preventDefault();
+                    setFetchError("You must load destination settings before saving.");
+                }
+            });
+
+            if (initialFormData.target_type === "profile") {
+                const profileRadio = targetRadios.find((radio) => radio.value === "profile");
+                if (profileRadio) {
+                    profileRadio.checked = true;
+                }
+            } else {
+                const subredditRadio = targetRadios.find((radio) => radio.value === "subreddit");
+                if (subredditRadio) {
+                    subredditRadio.checked = true;
+                }
+            }
+
+            refreshTargetInputs();
             renderList();
+
+            if (initialCapabilities) {
+                showStep2(initialCapabilities, initialTargetLabel || "-");
+            }
         })();
     </script>
 </body>

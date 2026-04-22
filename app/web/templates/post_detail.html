@@ -45,8 +45,19 @@
                     </article>
 
                     <article class="summary-item">
-                        <p class="summary-label">Subreddit</p>
-                        <p class="summary-value">{{ post.subreddit }}</p>
+                        <p class="summary-label">Destination</p>
+                        <p class="summary-value">
+                            {% if post.target_type == "profile" %}
+                                Profile
+                            {% else %}
+                                r/{{ post.subreddit }}
+                            {% endif %}
+                        </p>
+                    </article>
+
+                    <article class="summary-item">
+                        <p class="summary-label">Flair</p>
+                        <p class="summary-value">{{ post.flair_text or "-" }}</p>
                     </article>
 
                     <article class="summary-item">
@@ -132,6 +143,15 @@
 
                     <div class="detail-label">Spoiler:</div>
                     <div class="detail-value">{{ post.spoiler }}</div>
+
+                    <div class="detail-label">Target type:</div>
+                    <div class="detail-value">{{ post.target_type }}</div>
+
+                    <div class="detail-label">Flair ID:</div>
+                    <div class="detail-value">{{ post.flair_id or "-" }}</div>
+
+                    <div class="detail-label">Flair text:</div>
+                    <div class="detail-value">{{ post.flair_text or "-" }}</div>
                 </div>
             </details>
 

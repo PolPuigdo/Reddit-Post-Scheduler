@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 class PostValidationService:
     def validate_post_form(self, form_data: dict) -> tuple[list[str], datetime | None]:
         title = form_data.get("title", "").strip()
+        target_type = form_data.get("target_type", "").strip().lower() or "subreddit"
         subreddit = form_data.get("subreddit", "").strip()
         scheduled_at_raw = form_data.get("scheduled_at", "").strip()
 
@@ -12,10 +13,14 @@ class PostValidationService:
         if not title:
             errors.append("The title is required.")
 
-        if not subreddit:
-            errors.append("The subreddit is required.")
-        elif " " in subreddit:
-            errors.append("The subreddit must not contain spaces.")
+        if target_type not in {"subreddit", "profile"}:
+            errors.append("The destination type is invalid.")
+
+        if target_type == "subreddit":
+            if not subreddit:
+                errors.append("The subreddit is required.")
+            elif " " in subreddit:
+                errors.append("The subreddit must not contain spaces.")
 
         if not scheduled_at_raw:
             errors.append("The date and time are required.")

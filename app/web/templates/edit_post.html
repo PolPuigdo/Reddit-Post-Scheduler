@@ -57,17 +57,17 @@
                 </div>
 
                 <div class="field">
-                    <label for="subreddit">Subreddit</label>
+                    <label>Destination</label>
                     <input
                         type="text"
-                        id="subreddit"
-                        name="subreddit"
-                        required
-                        maxlength="100"
-                        placeholder="for example: pics"
-                        value="{{ form_data.subreddit if form_data else '' }}"
+                        value="{% if form_data.target_type == 'profile' %}Profile{% else %}r/{{ form_data.subreddit }}{% endif %}"
+                        readonly
                     >
+                    <small class="detail-path">Destination is locked during edit to keep subreddit rules consistent.</small>
                 </div>
+
+                <input type="hidden" name="target_type" value="{{ form_data.target_type if form_data else 'subreddit' }}">
+                <input type="hidden" name="subreddit" value="{{ form_data.subreddit if form_data else '' }}">
 
                 <div class="field">
                     <label for="scheduled_at">Date and time</label>

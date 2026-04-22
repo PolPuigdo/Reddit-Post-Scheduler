@@ -2,7 +2,7 @@ import time
 from datetime import datetime, timezone
 
 from app.config import Config
-from app.db import Base, init_db
+from app.db import Base, init_db, run_schema_migrations
 import app.models
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.services.logger_service import setup_logger
@@ -49,7 +49,8 @@ def run_once():
 
         log_info(
             f"Publishing post ID={post.id} "
-            f"(subreddit={post.subreddit}, attempt={post.attempts + 1}/{post.max_attempts})"
+            f"(target={post.target_type}, subreddit={post.subreddit}, "
+            f"attempt={post.attempts + 1}/{post.max_attempts})"
         )
 
         try:
@@ -57,9 +58,13 @@ def run_once():
             image_paths = repo.get_image_paths(post.id)
             final_url = publisher.publish(
                 subreddit=post.subreddit,
+                target_type=post.target_type,
                 title=post.title,
                 body=post.body,
                 image_paths=image_paths,
+                flair_id=post.flair_id,
+                nsfw=bool(post.nsfw),
+                spoiler=bool(post.spoiler),
             )
 
             # Mark as successfully published
@@ -82,6 +87,7 @@ def main():
     # Initialize database
     engine = init_db(Config.DATABASE_URL)
     Base.metadata.create_all(bind=engine)
+    run_schema_migrations()
 
     log_info("Worker started. Waiting for scheduled posts...")
 

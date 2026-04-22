@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import random
+import re
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
@@ -57,19 +58,114 @@ class RedditPlaywrightPublisher:
         self._save_debug_artifacts(page, "protection_page")
         raise RuntimeError("Protection page still present after refresh retries.")
 
+    @staticmethod
+    def _is_switch_checked(switch_locator) -> bool:
+        checked_attr = switch_locator.get_attribute("checked")
+        aria_checked = (switch_locator.get_attribute("aria-checked") or "").lower()
+        data_checked = (switch_locator.get_attribute("data-checked") or "").lower()
+        return (
+            checked_attr is not None
+            or aria_checked == "true"
+            or data_checked == "true"
+        )
+
+    @staticmethod
+    def _is_switch_disabled(switch_locator) -> bool:
+        disabled_attr = switch_locator.get_attribute("disabled")
+        aria_disabled = (switch_locator.get_attribute("aria-disabled") or "").lower()
+        return disabled_attr is not None or aria_disabled == "true"
+
+    def _set_switch_value(self, switch_locator, desired_value: bool) -> None:
+        if switch_locator.count() == 0 or not switch_locator.is_visible():
+            return
+
+        if self._is_switch_disabled(switch_locator):
+            return
+
+        current_value = self._is_switch_checked(switch_locator)
+        if current_value != desired_value:
+            switch_locator.click()
+
+    @staticmethod
+    def _resolve_submit_url(target_type: str, subreddit: str | None) -> str:
+        if target_type == "profile":
+            return "https://www.reddit.com/submit"
+        if target_type == "subreddit" and subreddit:
+            return f"https://www.reddit.com/r/{subreddit}/submit"
+        raise RuntimeError("Invalid target configuration.")
+
+    def _apply_subreddit_options(
+        self,
+        page,
+        flair_id: str | None,
+        nsfw: bool,
+        spoiler: bool,
+    ) -> None:
+        flair_tags_button = page.locator("#reddit-post-flair-button").first
+        if flair_tags_button.count() == 0 or not flair_tags_button.is_visible() or flair_tags_button.is_disabled():
+            return
+
+        flair_tags_button.click()
+        page.wait_for_timeout(700)
+
+        nsfw_switch = page.locator("faceplate-switch-input[name='isNsfw']").first
+        spoiler_switch = page.locator("faceplate-switch-input[name='isSpoiler']").first
+
+        self._set_switch_value(nsfw_switch, nsfw)
+        self._set_switch_value(spoiler_switch, spoiler)
+
+        flair_radios = page.locator("faceplate-radio-input[name='flairId']")
+        if flair_radios.count() > 0:
+            target_flair_id = "" if flair_id is None else flair_id
+            target_flair = page.locator(
+                f"faceplate-radio-input[name='flairId'][value='{target_flair_id}']"
+            ).first
+
+            if target_flair.count() == 0 and target_flair_id:
+                view_all_button = page.locator("#view-all-flairs-button").first
+                if view_all_button.count() > 0 and view_all_button.is_visible():
+                    view_all_button.click()
+                    page.wait_for_timeout(700)
+                    target_flair = page.locator(
+                        f"faceplate-radio-input[name='flairId'][value='{target_flair_id}']"
+                    ).first
+
+            if target_flair.count() > 0 and target_flair.is_visible():
+                target_flair.click()
+
+        try:
+            done_button = page.get_by_role("button", name=re.compile(r"(apply|save|done)", re.IGNORECASE)).first
+            if done_button.count() > 0 and done_button.is_visible() and done_button.is_enabled():
+                done_button.click()
+            else:
+                page.keyboard.press("Escape")
+        except Exception:
+            page.keyboard.press("Escape")
+
+        page.wait_for_timeout(400)
+
     def publish(
         self,
-        subreddit: str,
+        subreddit: str | None,
         title: str,
         body: str | None = None,
         image_paths: list[str] | None = None,
+        target_type: str = "subreddit",
+        flair_id: str | None = None,
+        nsfw: bool = False,
+        spoiler: bool = False,
     ) -> str:
         # Validate auth file
         if not self.auth_file.exists():
             raise RuntimeError("Playwright authentication file not found.")
 
         # Validate required inputs
-        if not subreddit.strip():
+        clean_target = (target_type or "").strip().lower()
+        clean_subreddit = (subreddit or "").strip()
+        if clean_target not in {"subreddit", "profile"}:
+            raise RuntimeError("Unsupported target type.")
+
+        if clean_target == "subreddit" and not clean_subreddit:
             raise RuntimeError("Subreddit cannot be empty.")
 
         if not title.strip():
@@ -86,7 +182,7 @@ class RedditPlaywrightPublisher:
 
             resolved_image_paths.append(resolved_image_path)
 
-        submit_url = f"https://www.reddit.com/r/{subreddit}/submit"
+        submit_url = self._resolve_submit_url(clean_target, clean_subreddit or None)
 
         try:
             with sync_playwright() as p:
@@ -157,6 +253,14 @@ class RedditPlaywrightPublisher:
 
                         print("Waiting for image processing...")
                         page.wait_for_timeout(8000 + max(0, len(resolved_image_paths) - 1) * 2500)
+
+                    if clean_target == "subreddit":
+                        self._apply_subreddit_options(
+                            page=page,
+                            flair_id=flair_id,
+                            nsfw=nsfw,
+                            spoiler=spoiler,
+                        )
 
                     # Submit post
                     print("Submitting post...")

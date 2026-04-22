@@ -1,16 +1,23 @@
 from datetime import datetime, timezone
 import hmac
+import json
 from pathlib import Path
 from urllib.parse import urlparse
 
-from flask import abort, current_app, redirect, render_template, request, send_from_directory, session, url_for
+from flask import abort, current_app, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 from app.config import Config
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
+from app.services.reddit_composer_capabilities_service import RedditComposerCapabilitiesService
 from app.services.validation_service import PostValidationService
 
 
-def register_routes(app, file_storage_service, reddit_publisher):
+def register_routes(app, file_storage_service, reddit_publisher, composer_capabilities_service=None):
     validation_service = PostValidationService()
+    capabilities_service = composer_capabilities_service or RedditComposerCapabilitiesService(
+        auth_file=Config.PLAYWRIGHT_AUTH_FILE,
+        headless=Config.PLAYWRIGHT_HEADLESS,
+        debug_artifacts_dir=Config.DEBUG_ARTIFACTS_DIR,
+    )
     allowed_status_values = ("pending", "publishing", "posted", "failed", "cancelled")
     allowed_status_set = set(allowed_status_values)
     allowed_sort_fields = ("id", "title", "subreddit", "status", "scheduled_at_utc")
@@ -32,11 +39,22 @@ def register_routes(app, file_storage_service, reddit_publisher):
         return scheduled_at_utc.astimezone().strftime("%Y-%m-%dT%H:%M")
 
     def _build_form_data_from_post(post) -> dict:
+        target_type = (post.target_type or "subreddit").strip().lower()
+        if target_type not in {"subreddit", "profile"}:
+            target_type = "subreddit"
+
+        subreddit_value = (post.subreddit or "").strip() if target_type == "subreddit" else ""
+
         return {
             "title": post.title or "",
             "body": post.body or "",
-            "subreddit": post.subreddit or "",
+            "target_type": target_type,
+            "subreddit": subreddit_value,
             "scheduled_at": _scheduled_at_form_value(post.scheduled_at_utc),
+            "flair_id": post.flair_id or "",
+            "flair_text": post.flair_text or "",
+            "nsfw": bool(post.nsfw),
+            "spoiler": bool(post.spoiler),
         }
 
     def _render_edit_template(post, form_data: dict, errors: list[str], existing_images: list[dict]):
@@ -82,6 +100,98 @@ def register_routes(app, file_storage_service, reddit_publisher):
 
     def _parse_csv_tokens(raw_value: str) -> list[str]:
         return [token.strip() for token in raw_value.split(",") if token.strip()]
+
+    def _parse_bool_from_form(raw_value: str | None) -> bool:
+        return (raw_value or "").strip().lower() in {"1", "true", "on", "yes"}
+
+    def _normalize_target_type(raw_target: str | None) -> str:
+        target_type = (raw_target or "").strip().lower()
+        if target_type in {"subreddit", "profile"}:
+            return target_type
+        return "subreddit"
+
+    def _target_label(target_type: str, subreddit: str | None) -> str:
+        if target_type == "profile":
+            return "Profile"
+        return f"r/{subreddit}" if subreddit else "r/-"
+
+    def _extract_capabilities_or_none(raw_payload: str | None) -> dict | None:
+        if not raw_payload:
+            return None
+        try:
+            payload = json.loads(raw_payload)
+        except (TypeError, ValueError):
+            return None
+        if not isinstance(payload, dict):
+            return None
+        return payload
+
+    def _load_composer_capabilities(target_type: str, subreddit: str | None) -> tuple[dict | None, str | None]:
+        try:
+            capabilities = capabilities_service.inspect(target_type=target_type, subreddit=subreddit)
+            return capabilities.to_dict(), None
+        except Exception as ex:
+            current_app.logger.warning(
+                "Could not inspect Reddit composer capabilities for target=%s subreddit=%s: %s",
+                target_type,
+                subreddit,
+                ex,
+            )
+            return None, "Could not read Reddit post settings for this destination. Please try again."
+
+    def _validate_form_against_capabilities(
+        capabilities: dict,
+        target_type: str,
+        uploaded_images_count: int,
+        submitted_flair_id: str,
+        submitted_nsfw: bool,
+        submitted_spoiler: bool,
+    ) -> tuple[list[str], str | None, bool, bool]:
+        errors: list[str] = []
+
+        image_required = bool(capabilities.get("image_required"))
+        max_images = capabilities.get("max_images")
+        has_flairs = bool(capabilities.get("has_flairs"))
+        has_tags = bool(capabilities.get("has_tags"))
+        flair_required = bool(capabilities.get("flair_required"))
+        flairs = capabilities.get("flairs") or []
+        nsfw_available = bool(capabilities.get("nsfw_available"))
+        nsfw_forced_on = bool(capabilities.get("nsfw_forced_on"))
+        spoiler_available = bool(capabilities.get("spoiler_available"))
+
+        if image_required and uploaded_images_count == 0:
+            errors.append("At least one image is required for this destination.")
+
+        if max_images == 1 and uploaded_images_count > 1:
+            errors.append("This destination only allows one image.")
+
+        final_flair_id: str | None = None
+        if target_type == "subreddit" and has_flairs:
+            valid_flair_ids = {(flair.get("id") or "") for flair in flairs if isinstance(flair, dict)}
+            if flair_required and not submitted_flair_id:
+                errors.append("A flair is required for this subreddit.")
+
+            if submitted_flair_id or flair_required:
+                if submitted_flair_id not in valid_flair_ids:
+                    errors.append("Selected flair is no longer valid for this subreddit.")
+                else:
+                    final_flair_id = submitted_flair_id
+            elif submitted_flair_id == "" and "" in valid_flair_ids:
+                final_flair_id = ""
+
+        final_nsfw = False
+        final_spoiler = False
+
+        if target_type == "subreddit" and has_tags:
+            if nsfw_forced_on:
+                final_nsfw = True
+            elif nsfw_available:
+                final_nsfw = submitted_nsfw
+
+            if spoiler_available:
+                final_spoiler = submitted_spoiler
+
+        return errors, final_flair_id, final_nsfw, final_spoiler
 
     def _get_uploaded_images() -> list:
         images = [file for file in request.files.getlist("images") if file and file.filename]
@@ -267,14 +377,64 @@ def register_routes(app, file_storage_service, reddit_publisher):
 
     @app.route("/posts/new")
     def new_post():
-        return render_template("create_post.html", errors=[], form_data=None)
+        return render_template(
+            "create_post.html",
+            errors=[],
+            form_data={
+                "target_type": "subreddit",
+                "subreddit": "",
+                "title": "",
+                "body": "",
+                "scheduled_at": "",
+                "flair_id": "",
+                "flair_text": "",
+                "nsfw": False,
+                "spoiler": False,
+            },
+            capabilities=None,
+            target_label=None,
+        )
+
+    @app.route("/posts/capabilities", methods=["POST"])
+    def post_capabilities():
+        payload = request.get_json(silent=True) or {}
+
+        target_type = _normalize_target_type(payload.get("target_type"))
+        subreddit = (payload.get("subreddit") or "").strip()
+        if target_type == "profile":
+            subreddit = ""
+
+        if target_type == "subreddit":
+            if not subreddit:
+                return jsonify({"ok": False, "error": "Subreddit is required."}), 400
+            if " " in subreddit:
+                return jsonify({"ok": False, "error": "Subreddit must not contain spaces."}), 400
+
+        capabilities, error_message = _load_composer_capabilities(target_type, subreddit or None)
+        if capabilities is None:
+            return jsonify({"ok": False, "error": error_message}), 502
+
+        return jsonify(
+            {
+                "ok": True,
+                "capabilities": capabilities,
+                "target_label": _target_label(target_type, subreddit or None),
+            }
+        )
 
     @app.route("/posts", methods=["POST"])
     def create_post():
         title = request.form.get("title", "").strip()
         body = request.form.get("body", "").strip()
+        target_type = _normalize_target_type(request.form.get("target_type"))
         subreddit = request.form.get("subreddit", "").strip()
+        if target_type == "profile":
+            subreddit = ""
         scheduled_at_raw = request.form.get("scheduled_at", "").strip()
+        submitted_flair_id = request.form.get("flair_id", "").strip()
+        submitted_nsfw = _parse_bool_from_form(request.form.get("nsfw"))
+        submitted_spoiler = _parse_bool_from_form(request.form.get("spoiler"))
+        capabilities_payload = _extract_capabilities_or_none(request.form.get("capabilities_json"))
         uploaded_images = _get_uploaded_images()
         requested_new_image_keys = _parse_csv_tokens(request.form.get("new_image_keys", ""))
         new_image_pairs = _build_new_image_file_pairs(uploaded_images, requested_new_image_keys)
@@ -283,14 +443,54 @@ def register_routes(app, file_storage_service, reddit_publisher):
         form_data = {
             "title": title,
             "body": body,
+            "target_type": target_type,
             "subreddit": subreddit,
             "scheduled_at": scheduled_at_raw,
+            "flair_id": submitted_flair_id,
+            "nsfw": submitted_nsfw,
+            "spoiler": submitted_spoiler,
         }
 
         errors, scheduled_at_utc = validation_service.validate_post_form(form_data)
 
+        live_capabilities: dict | None = None
+        if not errors:
+            live_capabilities, capabilities_error = _load_composer_capabilities(
+                target_type=target_type,
+                subreddit=subreddit or None,
+            )
+            if live_capabilities is None:
+                errors.append(capabilities_error or "Could not load destination capabilities.")
+
+        if live_capabilities is None and capabilities_payload is not None:
+            live_capabilities = capabilities_payload
+
+        final_flair_id: str | None = None
+        final_nsfw = False
+        final_spoiler = False
+
+        if not errors and live_capabilities is not None:
+            capability_errors, final_flair_id, final_nsfw, final_spoiler = _validate_form_against_capabilities(
+                capabilities=live_capabilities,
+                target_type=target_type,
+                uploaded_images_count=len(uploaded_images),
+                submitted_flair_id=submitted_flair_id,
+                submitted_nsfw=submitted_nsfw,
+                submitted_spoiler=submitted_spoiler,
+            )
+            errors.extend(capability_errors)
+
         if errors:
-            return render_template("create_post.html", errors=errors, form_data=form_data)
+            return render_template(
+                "create_post.html",
+                errors=errors,
+                form_data=form_data,
+                capabilities=live_capabilities,
+                target_label=_target_label(target_type, subreddit or None),
+            )
+
+        if scheduled_at_utc is None:
+            abort(400)
 
         saved_new_images_by_key: dict[str, str] = {}
         try:
@@ -305,7 +505,13 @@ def register_routes(app, file_storage_service, reddit_publisher):
                 post_id=0,
                 action="rollback uploaded",
             )
-            return render_template("create_post.html", errors=errors, form_data=form_data)
+            return render_template(
+                "create_post.html",
+                errors=errors,
+                form_data=form_data,
+                capabilities=live_capabilities,
+                target_label=_target_label(target_type, subreddit or None),
+            )
 
         ordered_image_paths: list[str] = []
         used_new_keys: set[str] = set()
@@ -320,13 +526,27 @@ def register_routes(app, file_storage_service, reddit_publisher):
             if image_key not in used_new_keys:
                 ordered_image_paths.append(image_path)
 
+        flair_text = None
+        if live_capabilities and final_flair_id is not None:
+            for flair in live_capabilities.get("flairs") or []:
+                if not isinstance(flair, dict):
+                    continue
+                if (flair.get("id") or "") == final_flair_id:
+                    flair_text = (flair.get("text") or "").strip() or None
+                    break
+
         repo = ScheduledPostRepository()
         repo.create(
             title=title,
             body=body or None,
-            subreddit=subreddit,
+            subreddit=subreddit or None,
+            target_type=target_type,
             scheduled_at_utc=scheduled_at_utc,
             image_paths=ordered_image_paths,
+            flair_id=final_flair_id,
+            flair_text=flair_text,
+            nsfw=final_nsfw,
+            spoiler=final_spoiler,
         )
 
         return redirect(url_for("home"))
@@ -374,7 +594,8 @@ def register_routes(app, file_storage_service, reddit_publisher):
 
         title = request.form.get("title", "").strip()
         body = request.form.get("body", "").strip()
-        subreddit = request.form.get("subreddit", "").strip()
+        target_type = _normalize_target_type(post.target_type)
+        subreddit = (post.subreddit or "").strip() if target_type == "subreddit" else ""
         scheduled_at_raw = request.form.get("scheduled_at", "").strip()
         uploaded_images = _get_uploaded_images()
         requested_new_image_keys = _parse_csv_tokens(request.form.get("new_image_keys", ""))
@@ -389,8 +610,13 @@ def register_routes(app, file_storage_service, reddit_publisher):
         form_data = {
             "title": title,
             "body": body,
+            "target_type": target_type,
             "subreddit": subreddit,
             "scheduled_at": scheduled_at_raw,
+            "flair_id": post.flair_id or "",
+            "flair_text": post.flair_text or "",
+            "nsfw": bool(post.nsfw),
+            "spoiler": bool(post.spoiler),
         }
 
         errors, scheduled_at_utc = validation_service.validate_post_form(form_data)
@@ -455,8 +681,13 @@ def register_routes(app, file_storage_service, reddit_publisher):
             title=title,
             body=body or None,
             subreddit=subreddit,
+            target_type=target_type,
             scheduled_at_utc=scheduled_at_utc,
             image_paths=final_image_paths,
+            nsfw=bool(post.nsfw),
+            spoiler=bool(post.spoiler),
+            flair_id=post.flair_id,
+            flair_text=post.flair_text,
             reset_attempts=True,
         )
 
@@ -505,9 +736,13 @@ def register_routes(app, file_storage_service, reddit_publisher):
         try:
             final_url = reddit_publisher.publish(
                 subreddit=post.subreddit,
+                target_type=post.target_type,
                 title=post.title,
                 body=post.body,
                 image_paths=image_paths,
+                flair_id=post.flair_id,
+                nsfw=bool(post.nsfw),
+                spoiler=bool(post.spoiler),
             )
             repo.mark_posted(post.id, final_url)
         except Exception as ex:

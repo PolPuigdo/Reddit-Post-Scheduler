@@ -68,7 +68,8 @@ class ScheduledPostRepository:
     def create(
         self,
         title: str,
-        subreddit: str,
+        subreddit: str | None,
+        target_type: str,
         scheduled_at_utc: datetime,
         body: str | None = None,
         image_paths: list[str] | None = None,
@@ -76,6 +77,8 @@ class ScheduledPostRepository:
         timezone_name: str = "Europe/Madrid",
         nsfw: bool = False,
         spoiler: bool = False,
+        flair_id: str | None = None,
+        flair_text: str | None = None,
     ) -> ScheduledPost:
         now = datetime.now(timezone.utc)
         normalized_image_paths = self._normalize_image_paths(
@@ -87,6 +90,9 @@ class ScheduledPostRepository:
             title=title,
             body=body,
             subreddit=subreddit,
+            target_type=target_type,
+            flair_id=flair_id,
+            flair_text=flair_text,
             image_path=normalized_image_paths[0] if normalized_image_paths else None,
             scheduled_at_utc=scheduled_at_utc,
             timezone=timezone_name,
@@ -135,6 +141,7 @@ class ScheduledPostRepository:
                     or_(
                         ScheduledPost.title.ilike(pattern),
                         ScheduledPost.subreddit.ilike(pattern),
+                        ScheduledPost.target_type.ilike(pattern),
                     )
                 )
 
@@ -279,10 +286,15 @@ class ScheduledPostRepository:
         post_id: int,
         title: str,
         body: str | None,
-        subreddit: str,
+        subreddit: str | None,
+        target_type: str,
         scheduled_at_utc: datetime,
         image_paths: list[str] | None = None,
         image_path: str | None = None,
+        nsfw: bool = False,
+        spoiler: bool = False,
+        flair_id: str | None = None,
+        flair_text: str | None = None,
         reset_attempts: bool = True,
     ) -> bool:
         with db.SessionLocal() as session:
@@ -304,7 +316,12 @@ class ScheduledPostRepository:
             post.title = title
             post.body = body
             post.subreddit = subreddit
+            post.target_type = target_type
+            post.flair_id = flair_id
+            post.flair_text = flair_text
             post.scheduled_at_utc = scheduled_at_utc
+            post.nsfw = nsfw
+            post.spoiler = spoiler
             post.updated_at_utc = datetime.now(timezone.utc)
 
             if reset_attempts:

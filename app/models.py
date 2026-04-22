@@ -11,7 +11,10 @@ class ScheduledPost(Base):
 
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     body: Mapped[str | None] = mapped_column(Text, nullable=True)
-    subreddit: Mapped[str] = mapped_column(String(100), nullable=False)
+    subreddit: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    target_type: Mapped[str] = mapped_column(String(20), nullable=False, default="subreddit")
+    flair_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    flair_text: Mapped[str | None] = mapped_column(String(300), nullable=True)
     image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     scheduled_at_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)

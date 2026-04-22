@@ -97,7 +97,7 @@
                                 </th>
                                 <th>
                                     <a class="sort-link {% if filters.sort_by == 'subreddit' %}sort-link-active{% endif %}" href="{{ sort_links.subreddit }}">
-                                        Subreddit{% if filters.sort_by == "subreddit" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
+                                        Destination{% if filters.sort_by == "subreddit" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
                                     </a>
                                 </th>
                                 <th>
@@ -119,7 +119,13 @@
                                     <td>
                                         <a href="/posts/{{ post.id }}">{{ post.title }}</a>
                                     </td>
-                                    <td>{{ post.subreddit }}</td>
+                                    <td>
+                                        {% if post.target_type == "profile" %}
+                                            Profile
+                                        {% else %}
+                                            r/{{ post.subreddit }}
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         <span class="status-badge status-{{ post.status }}">{{ post.status }}</span>
                                     </td>

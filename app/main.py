@@ -1,6 +1,6 @@
 from flask import Flask
 from app.config import Config
-from app.db import Base, init_db
+from app.db import Base, init_db, run_schema_migrations
 import app.models
 from app.services.file_storage_service import FileStorageService
 from app.services.reddit_playwright_publisher import RedditPlaywrightPublisher
@@ -17,6 +17,7 @@ def create_app():
 
     engine = init_db(Config.DATABASE_URL)
     Base.metadata.create_all(bind=engine)
+    run_schema_migrations()
 
     file_storage_service = FileStorageService(Config.UPLOAD_FOLDER)
     

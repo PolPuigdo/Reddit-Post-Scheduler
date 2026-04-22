@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 from pathlib import Path
 import unittest
@@ -80,6 +81,9 @@ class RouteCapabilitiesTests(unittest.TestCase):
     def tearDown(self):
         self.config_patch.stop()
 
+    def _capabilities_json(self) -> str:
+        return json.dumps(self.stub_capabilities.response.to_dict())
+
     def test_capabilities_endpoint_profile_success(self):
         self.stub_capabilities.response = ComposerCapabilities(
             target_type="profile",
@@ -115,7 +119,7 @@ class RouteCapabilitiesTests(unittest.TestCase):
         payload = response.get_json()
         self.assertFalse(payload["ok"])
 
-    def test_create_post_blocks_when_capabilities_fail(self):
+    def test_create_post_blocks_when_capabilities_missing(self):
         self.stub_capabilities.raise_error = True
 
         response = self.client.post(
@@ -126,13 +130,12 @@ class RouteCapabilitiesTests(unittest.TestCase):
                 "title": "Hello",
                 "body": "",
                 "scheduled_at": "2030-01-01T10:00",
-                "capabilities_json": "{}",
             },
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            b"Could not read Reddit post settings for this destination",
+            b"You must load destination settings before saving",
             response.data,
         )
 
@@ -159,6 +162,7 @@ class RouteCapabilitiesTests(unittest.TestCase):
                 "title": "Hello",
                 "body": "",
                 "scheduled_at": "2030-01-01T10:00",
+                "capabilities_json": self._capabilities_json(),
                 "images": [
                     (BytesIO(b"image-a"), "a.png"),
                     (BytesIO(b"image-b"), "b.png"),
@@ -194,13 +198,14 @@ class RouteCapabilitiesTests(unittest.TestCase):
                 "/posts",
                 data={
                     "target_type": "subreddit",
-                    "subreddit": "python",
-                    "title": "Hello",
-                    "body": "",
-                    "scheduled_at": "2030-01-01T10:00",
-                    "flair_id": "flair-123",
-                    "spoiler": "1",
-                },
+                "subreddit": "python",
+                "title": "Hello",
+                "body": "",
+                "scheduled_at": "2030-01-01T10:00",
+                "capabilities_json": self._capabilities_json(),
+                "flair_id": "flair-123",
+                "spoiler": "1",
+            },
             )
 
         self.assertEqual(response.status_code, 302)

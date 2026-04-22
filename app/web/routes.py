@@ -453,17 +453,17 @@ def register_routes(app, file_storage_service, reddit_publisher, composer_capabi
 
         errors, scheduled_at_utc = validation_service.validate_post_form(form_data)
 
-        live_capabilities: dict | None = None
-        if not errors:
-            live_capabilities, capabilities_error = _load_composer_capabilities(
-                target_type=target_type,
-                subreddit=subreddit or None,
-            )
-            if live_capabilities is None:
-                errors.append(capabilities_error or "Could not load destination capabilities.")
+        live_capabilities: dict | None = capabilities_payload
+        if not errors and live_capabilities is None:
+            errors.append("You must load destination settings before saving.")
 
-        if live_capabilities is None and capabilities_payload is not None:
-            live_capabilities = capabilities_payload
+        if not errors and live_capabilities is not None:
+            capabilities_target = _normalize_target_type(live_capabilities.get("target_type"))
+            capabilities_subreddit = (live_capabilities.get("subreddit") or "").strip()
+            if capabilities_target != target_type:
+                errors.append("Destination settings are out of sync. Reload destination settings and try again.")
+            elif target_type == "subreddit" and capabilities_subreddit != subreddit:
+                errors.append("Subreddit settings are out of sync. Reload destination settings and try again.")
 
         final_flair_id: str | None = None
         final_nsfw = False

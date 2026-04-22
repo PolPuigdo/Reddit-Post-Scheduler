@@ -161,6 +161,7 @@ class ScheduledPostRepository:
             changed = self._ensure_legacy_image_attachment(session, post)
             if changed:
                 session.commit()
+                post = session.get(ScheduledPost, post_id)
 
             return post
 
@@ -321,13 +322,13 @@ class ScheduledPostRepository:
 
     def get_due_pending_posts(self, now_utc: datetime) -> list[ScheduledPost]:
         with db.SessionLocal() as session:
-            posts = (
+            due_query = (
                 session.query(ScheduledPost)
                 .filter(ScheduledPost.status == "pending")
                 .filter(ScheduledPost.scheduled_at_utc <= now_utc)
                 .order_by(ScheduledPost.scheduled_at_utc.asc())
-                .all()
             )
+            posts = due_query.all()
 
             changed = False
             for post in posts:
@@ -335,5 +336,6 @@ class ScheduledPostRepository:
 
             if changed:
                 session.commit()
+                posts = due_query.all()
 
             return posts

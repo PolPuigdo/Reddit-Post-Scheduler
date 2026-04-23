@@ -159,6 +159,25 @@ class ScheduledPostRepository:
             posts = query.order_by(order_clause).all()
             return posts
 
+    def get_calendar_events(
+        self,
+        from_utc: datetime,
+        to_utc: datetime,
+        statuses: tuple[str, ...] = ("pending", "publishing", "posted"),
+    ) -> list[ScheduledPost]:
+        if not statuses:
+            return []
+
+        with db.SessionLocal() as session:
+            query = (
+                session.query(ScheduledPost)
+                .filter(ScheduledPost.scheduled_at_utc >= from_utc)
+                .filter(ScheduledPost.scheduled_at_utc <= to_utc)
+                .filter(ScheduledPost.status.in_(statuses))
+                .order_by(ScheduledPost.scheduled_at_utc.asc(), ScheduledPost.id.asc())
+            )
+            return query.all()
+
     def get_by_id(self, post_id: int) -> ScheduledPost | None:
         with db.SessionLocal() as session:
             post = session.get(ScheduledPost, post_id)

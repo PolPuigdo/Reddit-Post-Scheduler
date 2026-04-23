@@ -112,6 +112,24 @@ def register_routes(app, file_storage_service, reddit_publisher, composer_capabi
 
         return parsed_local.astimezone(timezone.utc)
 
+    def _parse_utc_iso_datetime(raw_value: str) -> datetime | None:
+        if not raw_value:
+            return None
+
+        normalized = raw_value.strip()
+        if normalized.endswith("Z"):
+            normalized = f"{normalized[:-1]}+00:00"
+
+        try:
+            parsed = datetime.fromisoformat(normalized)
+        except ValueError:
+            return None
+
+        if parsed.tzinfo is None:
+            return None
+
+        return parsed.astimezone(timezone.utc)
+
     def _parse_csv_tokens(raw_value: str) -> list[str]:
         return [token.strip() for token in raw_value.split(",") if token.strip()]
 
@@ -389,6 +407,51 @@ def register_routes(app, file_storage_service, reddit_publisher, composer_capabi
             status_options=allowed_status_values,
             scheduled_at_local_display=_scheduled_at_local_display_value,
         )
+
+    @app.route("/posts/calendar/events", methods=["GET"])
+    def calendar_events():
+        from_utc_raw = request.args.get("from_utc", "").strip()
+        to_utc_raw = request.args.get("to_utc", "").strip()
+
+        from_utc = _parse_utc_iso_datetime(from_utc_raw)
+        to_utc = _parse_utc_iso_datetime(to_utc_raw)
+
+        if from_utc is None or to_utc is None:
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": "Invalid from_utc or to_utc. Use ISO-8601 UTC values.",
+                }
+            ), 400
+
+        if from_utc > to_utc:
+            return jsonify({"ok": False, "error": "from_utc must be less than or equal to to_utc."}), 400
+
+        repo = ScheduledPostRepository()
+        calendar_posts = repo.get_calendar_events(
+            from_utc=from_utc,
+            to_utc=to_utc,
+            statuses=("pending", "publishing", "posted"),
+        )
+
+        events: list[dict] = []
+        for post in calendar_posts:
+            scheduled_at_utc = post.scheduled_at_utc
+            if scheduled_at_utc.tzinfo is None:
+                scheduled_at_utc = scheduled_at_utc.replace(tzinfo=timezone.utc)
+
+            events.append(
+                {
+                    "id": post.id,
+                    "title": post.title,
+                    "target_type": post.target_type,
+                    "subreddit": post.subreddit,
+                    "status": post.status,
+                    "scheduled_at_utc": scheduled_at_utc.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
+                }
+            )
+
+        return jsonify({"ok": True, "events": events})
 
     @app.route("/posts/new")
     def new_post():

@@ -9,76 +9,78 @@
 </head>
 <body>
     <main class="page">
-        <nav class="top-nav top-nav-actions">
-            <form class="inline-form" method="post" action="/logout">
-                <button class="btn btn-secondary" type="submit">Logout</button>
-            </form>
-        </nav>
-
         <header class="page-header home-header">
             <div class="brand">
                 <img class="brand-logo" src="{{ url_for('static', filename='img/app_logo.png') }}" alt="Reddit Scheduler logo">
                 <h1>Reddit Scheduler</h1>
             </div>
+            <form class="inline-form" method="post" action="/logout">
+                <button class="btn btn-secondary" type="submit">Logout</button>
+            </form>
         </header>
 
-        <a class="btn btn-primary home-add-btn" href="/posts/new">Create new post</a>
         <section class="card section posts-section">
-            <h2 class="section-title">Scheduled posts</h2>
-            <form class="filters-form" method="get" action="/">
-                <input type="hidden" name="sort_by" value="{{ filters.sort_by }}">
-                <input type="hidden" name="sort_dir" value="{{ filters.sort_dir }}">
+            <div class="posts-header">
+                <h2 class="section-title">Scheduled posts</h2>
+                <a class="btn btn-primary posts-add-btn" href="/posts/new">Create new post</a>
+            </div>
+            <details class="tech-panel filters-panel" {% if filters.is_active %}open{% endif %}>
+                <summary>Filters</summary>
+                <form class="filters-form" method="get" action="/">
+                    <input type="hidden" name="sort_by" value="{{ filters.sort_by }}">
+                    <input type="hidden" name="sort_dir" value="{{ filters.sort_dir }}">
 
-                <div class="filters-grid">
-                    <div class="field filter-field">
-                        <label for="q">Search title/subreddit</label>
-                        <input
-                            type="text"
-                            id="q"
-                            name="q"
-                            placeholder="for example: pics"
-                            value="{{ filters.q }}"
-                        >
+                    <div class="filters-grid">
+                        <div class="field filter-field">
+                            <label for="q">Search title/subreddit</label>
+                            <input
+                                type="text"
+                                id="q"
+                                name="q"
+                                placeholder="for example: pics"
+                                value="{{ filters.q }}"
+                            >
+                        </div>
+
+                        <div class="field filter-field">
+                            <label for="status">Status</label>
+                            <select id="status" name="status">
+                                <option value="">All</option>
+                                {% for status_option in status_options %}
+                                    <option value="{{ status_option }}" {% if filters.status == status_option %}selected{% endif %}>
+                                        {{ status_option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="field filter-field">
+                            <label for="scheduled_from">Scheduled from</label>
+                            <input
+                                type="datetime-local"
+                                id="scheduled_from"
+                                name="scheduled_from"
+                                value="{{ filters.scheduled_from }}"
+                            >
+                        </div>
+
+                        <div class="field filter-field">
+                            <label for="scheduled_to">Scheduled to</label>
+                            <input
+                                type="datetime-local"
+                                id="scheduled_to"
+                                name="scheduled_to"
+                                value="{{ filters.scheduled_to }}"
+                            >
+                        </div>
                     </div>
 
-                    <div class="field filter-field">
-                        <label for="status">Status</label>
-                        <select id="status" name="status">
-                            <option value="">All</option>
-                            {% for status_option in status_options %}
-                                <option value="{{ status_option }}" {% if filters.status == status_option %}selected{% endif %}>
-                                    {{ status_option }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                    <div class="filters-actions">
+                        <button class="btn btn-primary" type="submit">Apply filters</button>
+                        <a class="btn btn-secondary" href="/">Reset filters</a>
                     </div>
-
-                    <div class="field filter-field">
-                        <label for="scheduled_from">Scheduled from</label>
-                        <input
-                            type="datetime-local"
-                            id="scheduled_from"
-                            name="scheduled_from"
-                            value="{{ filters.scheduled_from }}"
-                        >
-                    </div>
-
-                    <div class="field filter-field">
-                        <label for="scheduled_to">Scheduled to</label>
-                        <input
-                            type="datetime-local"
-                            id="scheduled_to"
-                            name="scheduled_to"
-                            value="{{ filters.scheduled_to }}"
-                        >
-                    </div>
-                </div>
-
-                <div class="filters-actions">
-                    <button class="btn btn-primary" type="submit">Apply filters</button>
-                    <a class="btn btn-secondary" href="/">Reset filters</a>
-                </div>
-            </form>
+                </form>
+            </details>
 
             {% if posts %}
                 <div class="data-table-wrap">

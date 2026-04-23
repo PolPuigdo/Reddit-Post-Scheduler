@@ -333,9 +333,9 @@ def register_routes(app, file_storage_service, reddit_publisher, composer_capabi
         if scheduled_to and scheduled_to_utc is None:
             scheduled_to = ""
 
-        sort_by = request.args.get("sort_by", "id").strip()
+        sort_by = request.args.get("sort_by", "scheduled_at_utc").strip()
         if sort_by not in allowed_sort_set:
-            sort_by = "id"
+            sort_by = "scheduled_at_utc"
 
         sort_dir = request.args.get("sort_dir", "desc").strip().lower()
         if sort_dir not in allowed_sort_directions:

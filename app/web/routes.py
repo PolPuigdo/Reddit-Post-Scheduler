@@ -38,6 +38,15 @@ def register_routes(app, file_storage_service, reddit_publisher, composer_capabi
 
         return scheduled_at_utc.astimezone().strftime("%Y-%m-%dT%H:%M")
 
+    def _scheduled_at_local_display_value(scheduled_at_utc) -> str:
+        if scheduled_at_utc is None:
+            return "-"
+
+        if scheduled_at_utc.tzinfo is None:
+            scheduled_at_utc = scheduled_at_utc.replace(tzinfo=timezone.utc)
+
+        return scheduled_at_utc.astimezone().strftime("%Y-%m-%d %H:%M")
+
     def _build_form_data_from_post(post) -> dict:
         target_type = (post.target_type or "subreddit").strip().lower()
         if target_type not in {"subreddit", "profile"}:
@@ -373,6 +382,7 @@ def register_routes(app, file_storage_service, reddit_publisher, composer_capabi
             filters=filters,
             sort_links=sort_links,
             status_options=allowed_status_values,
+            scheduled_at_local_display=_scheduled_at_local_display_value,
         )
 
     @app.route("/posts/new")
@@ -564,6 +574,7 @@ def register_routes(app, file_storage_service, reddit_publisher, composer_capabi
             "post_detail.html",
             post=post,
             image_items=image_items,
+            scheduled_at_local_display=_scheduled_at_local_display_value,
         )
 
     @app.route("/posts/<int:post_id>/edit")

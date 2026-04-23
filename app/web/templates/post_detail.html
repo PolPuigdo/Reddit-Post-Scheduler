@@ -45,8 +45,8 @@
                     </article>
 
                     <article class="summary-item">
-                        <p class="summary-label">Scheduled date (UTC)</p>
-                        <p class="summary-value">{{ post.scheduled_at_utc }}</p>
+                        <p class="summary-label">Scheduled date (Local)</p>
+                        <p class="summary-value">{{ scheduled_at_local_display(post.scheduled_at_utc) }}</p>
                     </article>
 
                     <article class="summary-item">

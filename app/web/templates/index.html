@@ -107,7 +107,7 @@
                                 </th>
                                 <th>
                                     <a class="sort-link {% if filters.sort_by == 'scheduled_at_utc' %}sort-link-active{% endif %}" href="{{ sort_links.scheduled_at_utc }}">
-                                        Scheduled date (UTC){% if filters.sort_by == "scheduled_at_utc" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
+                                        Scheduled date (Local){% if filters.sort_by == "scheduled_at_utc" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
                                     </a>
                                 </th>
                             </tr>
@@ -129,7 +129,7 @@
                                     <td>
                                         <span class="status-badge status-{{ post.status }}">{{ post.status }}</span>
                                     </td>
-                                    <td>{{ post.scheduled_at_utc }}</td>
+                                    <td>{{ scheduled_at_local_display(post.scheduled_at_utc) }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>

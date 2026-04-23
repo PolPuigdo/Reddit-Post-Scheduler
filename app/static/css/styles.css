@@ -505,6 +505,15 @@ button:disabled,
     font-weight: 700;
 }
 
+.data-table .col-center {
+    text-align: center;
+}
+
+.data-table thead th.col-center .sort-link {
+    display: flex;
+    justify-content: center;
+}
+
 .sort-link {
     display: inline-flex;
     align-items: center;

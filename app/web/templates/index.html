@@ -109,17 +109,17 @@
                                         Title{% if filters.sort_by == "title" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
                                     </a>
                                 </th>
-                                <th>
+                                <th class="col-center">
                                     <a class="sort-link {% if filters.sort_by == 'subreddit' %}sort-link-active{% endif %}" href="{{ sort_links.subreddit }}">
                                         Destination{% if filters.sort_by == "subreddit" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
                                     </a>
                                 </th>
-                                <th>
+                                <th class="col-center">
                                     <a class="sort-link {% if filters.sort_by == 'status' %}sort-link-active{% endif %}" href="{{ sort_links.status }}">
                                         Status{% if filters.sort_by == "status" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
                                     </a>
                                 </th>
-                                <th>
+                                <th class="col-center">
                                     <a class="sort-link {% if filters.sort_by == 'scheduled_at_utc' %}sort-link-active{% endif %}" href="{{ sort_links.scheduled_at_utc }}">
                                         Scheduled date (Local){% if filters.sort_by == "scheduled_at_utc" %}<span class="sort-indicator">{{ "^" if filters.sort_dir == "asc" else "v" }}</span>{% endif %}
                                     </a>
@@ -133,17 +133,17 @@
                                     <td>
                                         <a href="/posts/{{ post.id }}">{{ post.title }}</a>
                                     </td>
-                                    <td>
+                                    <td class="col-center">
                                         {% if post.target_type == "profile" %}
                                             Profile
                                         {% else %}
                                             r/{{ post.subreddit }}
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td class="col-center">
                                         <span class="status-badge status-{{ post.status }}">{{ post.status }}</span>
                                     </td>
-                                    <td>{{ scheduled_at_local_display(post.scheduled_at_utc) }}</td>
+                                    <td class="col-center">{{ scheduled_at_local_display(post.scheduled_at_utc) }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>

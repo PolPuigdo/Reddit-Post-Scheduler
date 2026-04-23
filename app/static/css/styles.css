@@ -191,10 +191,12 @@ h1 {
 }
 
 .calendar-month {
+    position: relative;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-sm);
     background: rgba(19, 25, 38, 0.72);
     padding: 0.65rem;
+    overflow: visible;
 }
 
 .calendar-month-title {
@@ -245,10 +247,11 @@ h1 {
 }
 
 .calendar-days {
+    position: relative;
     gap: 0;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 9px;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .calendar-days .calendar-day:nth-child(7n) {
@@ -308,7 +311,7 @@ h1 {
     left: 50%;
     top: calc(100% + 0.35rem);
     transform: translateX(-50%);
-    z-index: 40;
+    z-index: 2000;
     min-width: 240px;
     max-width: 320px;
     border: 1px solid rgba(255, 255, 255, 0.14);
@@ -326,6 +329,12 @@ h1 {
 .calendar-day-has-events.calendar-day-open .calendar-tooltip {
     opacity: 1;
     visibility: visible;
+}
+
+.calendar-day-has-events:hover,
+.calendar-day-has-events:focus-within,
+.calendar-day-has-events.calendar-day-open {
+    z-index: 1000;
 }
 
 .calendar-tooltip-list {

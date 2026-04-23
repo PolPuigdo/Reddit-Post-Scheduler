@@ -99,6 +99,7 @@ Available variables:
 | `PLAYWRIGHT_AUTH_FILE` | `playwright/.auth/reddit.json` | Saved Reddit session |
 | `WORKER_POLL_SECONDS` | `30` | Worker polling interval (seconds) |
 | `DEBUG_ARTIFACTS_DIR` | `logs/debug` | Screenshots/HTML on Playwright errors |
+| `CAPABILITIES_CACHE_TTL_HOURS` | `24` | Capabilities cache TTL in hours |
 
 ---
 

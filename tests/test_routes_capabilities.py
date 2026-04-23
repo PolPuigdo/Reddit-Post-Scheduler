@@ -27,6 +27,7 @@ class DummyPublisher:
 class StubCapabilitiesService:
     def __init__(self):
         self.raise_error = False
+        self.inspect_calls = 0
         self.last_target_type = None
         self.last_subreddit = None
         self.response = ComposerCapabilities(
@@ -44,6 +45,7 @@ class StubCapabilitiesService:
         )
 
     def inspect(self, target_type: str, subreddit: str | None = None):
+        self.inspect_calls += 1
         self.last_target_type = target_type
         self.last_subreddit = subreddit
         if self.raise_error:
@@ -118,6 +120,49 @@ class RouteCapabilitiesTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         payload = response.get_json()
         self.assertFalse(payload["ok"])
+
+    def test_capabilities_endpoint_uses_cache_for_same_subreddit(self):
+        response_a = self.client.post(
+            "/posts/capabilities",
+            json={"target_type": "subreddit", "subreddit": "Python"},
+        )
+        response_b = self.client.post(
+            "/posts/capabilities",
+            json={"target_type": "subreddit", "subreddit": "python"},
+        )
+
+        self.assertEqual(response_a.status_code, 200)
+        self.assertEqual(response_b.status_code, 200)
+        self.assertEqual(self.stub_capabilities.inspect_calls, 1)
+
+    def test_capabilities_endpoint_uses_separate_cache_keys_by_destination(self):
+        response_python_a = self.client.post(
+            "/posts/capabilities",
+            json={"target_type": "subreddit", "subreddit": "python"},
+        )
+        response_python_b = self.client.post(
+            "/posts/capabilities",
+            json={"target_type": "subreddit", "subreddit": "python"},
+        )
+        response_java = self.client.post(
+            "/posts/capabilities",
+            json={"target_type": "subreddit", "subreddit": "java"},
+        )
+        response_profile_a = self.client.post(
+            "/posts/capabilities",
+            json={"target_type": "profile", "subreddit": ""},
+        )
+        response_profile_b = self.client.post(
+            "/posts/capabilities",
+            json={"target_type": "profile", "subreddit": ""},
+        )
+
+        self.assertEqual(response_python_a.status_code, 200)
+        self.assertEqual(response_python_b.status_code, 200)
+        self.assertEqual(response_java.status_code, 200)
+        self.assertEqual(response_profile_a.status_code, 200)
+        self.assertEqual(response_profile_b.status_code, 200)
+        self.assertEqual(self.stub_capabilities.inspect_calls, 3)
 
     def test_create_post_blocks_when_capabilities_missing(self):
         self.stub_capabilities.raise_error = True

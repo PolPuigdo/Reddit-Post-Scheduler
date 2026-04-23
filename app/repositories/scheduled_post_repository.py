@@ -217,7 +217,7 @@ class ScheduledPostRepository:
             if post is None:
                 return False
 
-            if post.status != "cancelled":
+            if post.status not in {"cancelled", "posted", "failed"}:
                 return False
 
             (

@@ -7,16 +7,21 @@ from urllib.parse import urlparse
 from flask import abort, current_app, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 from app.config import Config
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
+from app.services.cached_composer_capabilities_service import CachedComposerCapabilitiesService
 from app.services.reddit_composer_capabilities_service import RedditComposerCapabilitiesService
 from app.services.validation_service import PostValidationService
 
 
 def register_routes(app, file_storage_service, reddit_publisher, composer_capabilities_service=None):
     validation_service = PostValidationService()
-    capabilities_service = composer_capabilities_service or RedditComposerCapabilitiesService(
+    base_capabilities_service = composer_capabilities_service or RedditComposerCapabilitiesService(
         auth_file=Config.PLAYWRIGHT_AUTH_FILE,
         headless=Config.PLAYWRIGHT_HEADLESS,
         debug_artifacts_dir=Config.DEBUG_ARTIFACTS_DIR,
+    )
+    capabilities_service = CachedComposerCapabilitiesService(
+        base_service=base_capabilities_service,
+        ttl_seconds=Config.CAPABILITIES_CACHE_TTL_SECONDS,
     )
     allowed_status_values = ("pending", "publishing", "posted", "failed", "cancelled")
     allowed_status_set = set(allowed_status_values)
@@ -769,7 +774,7 @@ def register_routes(app, file_storage_service, reddit_publisher, composer_capabi
         if post is None:
             abort(404)
 
-        if post.status not in {"cancelled", "posted"}:
+        if post.status not in {"cancelled", "posted", "failed"}:
             abort(400)
 
         image_paths = repo.get_image_paths(post_id)

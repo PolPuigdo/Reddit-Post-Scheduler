@@ -27,6 +27,10 @@ class Config:
     )
     WORKER_POLL_SECONDS = int(os.getenv("WORKER_POLL_SECONDS", 30))
     DEBUG_ARTIFACTS_DIR = os.getenv("DEBUG_ARTIFACTS_DIR", "logs/debug")
+    CAPABILITIES_CACHE_TTL_HOURS = int(os.getenv("CAPABILITIES_CACHE_TTL_HOURS", 24))
+    CAPABILITIES_CACHE_TTL_SECONDS = int(
+        os.getenv("CAPABILITIES_CACHE_TTL_SECONDS", CAPABILITIES_CACHE_TTL_HOURS * 60 * 60)
+    )
 
     @classmethod
     def ensure_runtime_directories(cls) -> None:

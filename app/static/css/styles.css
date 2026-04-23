@@ -222,9 +222,10 @@ h1 {
 .calendar-day {
     position: relative;
     min-height: 2.35rem;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 9px;
-    background: rgba(255, 255, 255, 0.02);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0;
+    background: transparent;
     padding: 0;
     display: flex;
     align-items: center;
@@ -232,17 +233,30 @@ h1 {
 }
 
 .calendar-day-empty {
-    border-color: transparent;
     background: transparent;
 }
 
 .calendar-day-has-events {
     cursor: pointer;
-    border-color: rgba(255, 255, 255, 0.13);
 }
 
 .calendar-day-has-events:hover {
     background: rgba(255, 255, 255, 0.06);
+}
+
+.calendar-days {
+    gap: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+    overflow: hidden;
+}
+
+.calendar-days .calendar-day:nth-child(7n) {
+    border-right: 0;
+}
+
+.calendar-days .calendar-day:nth-last-child(-n + 7) {
+    border-bottom: 0;
 }
 
 .calendar-day-number {

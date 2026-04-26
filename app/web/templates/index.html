@@ -330,7 +330,7 @@
                 return grouped;
             }
 
-            function buildMonthElement(monthStart, groupedEvents) {
+            function buildMonthElement(monthStart, groupedEvents, todayKey) {
                 const monthElement = document.createElement("section");
                 monthElement.className = "calendar-month";
 
@@ -373,6 +373,12 @@
                     const dayDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), dayOfMonth);
                     const dayKey = localDayKey(dayDate);
                     const dayData = groupedEvents.get(dayKey);
+                    const isToday = dayKey === todayKey;
+
+                    if (isToday) {
+                        dayCell.classList.add("calendar-day-today");
+                        dayCell.setAttribute("aria-current", "date");
+                    }
 
                     const dayBadge = document.createElement("span");
                     dayBadge.className = "calendar-day-number-badge";
@@ -456,11 +462,12 @@
                     }
 
                     const groupedEvents = groupEventsByDay(events);
+                    const todayKey = localDayKey(new Date());
                     monthsHost.innerHTML = "";
 
                     for (let index = 0; index < monthsToShow; index += 1) {
                         const monthStart = addMonths(rangeStart, index);
-                        monthsHost.appendChild(buildMonthElement(monthStart, groupedEvents));
+                        monthsHost.appendChild(buildMonthElement(monthStart, groupedEvents, todayKey));
                     }
                 } catch (error) {
                     if (renderId !== renderVersion) {

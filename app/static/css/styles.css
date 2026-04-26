@@ -246,6 +246,17 @@ h1 {
     background: rgba(255, 255, 255, 0.06);
 }
 
+.calendar-day-today {
+    background: rgba(59, 130, 246, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.65);
+}
+
+.calendar-day-today.calendar-day-has-events:hover,
+.calendar-day-today.calendar-day-has-events:focus-within,
+.calendar-day-today.calendar-day-has-events.calendar-day-open {
+    background: rgba(59, 130, 246, 0.2);
+}
+
 .calendar-days {
     position: relative;
     gap: 0;
